@@ -1,0 +1,1 @@
+# reource_dopas
