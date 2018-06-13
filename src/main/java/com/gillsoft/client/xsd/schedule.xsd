@@ -1,0 +1,60 @@
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="schedule">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="trip" maxOccurs="unbounded" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="routemap">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="route" maxOccurs="unbounded"
+											minOccurs="0">
+											<xs:complexType>
+												<xs:simpleContent>
+													<xs:extension base="xs:string">
+														<xs:attribute type="xs:string" name="time_arr"
+															use="optional" />
+														<xs:attribute type="xs:string" name="time_dep"
+															use="optional" />
+														<xs:attribute type="xs:short" name="distance"
+															use="optional" />
+														<xs:attribute type="xs:string" name="st_name"
+															use="optional" />
+														<xs:attribute type="xs:string" name="st_code"
+															use="optional" />
+													</xs:extension>
+												</xs:simpleContent>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute type="xs:string" name="id" use="optional" />
+						<xs:attribute type="xs:string" name="number" use="optional" />
+						<xs:attribute type="xs:string" name="time_dep" use="optional" />
+						<xs:attribute type="xs:string" name="st_dep_code"
+							use="optional" />
+						<xs:attribute type="xs:string" name="st_dep_name"
+							use="optional" />
+						<xs:attribute type="xs:string" name="st_form_name"
+							use="optional" />
+						<xs:attribute type="xs:string" name="st_form_code"
+							use="optional" />
+						<xs:attribute type="xs:string" name="st_end_name"
+							use="optional" />
+						<xs:attribute type="xs:string" name="st_end_code"
+							use="optional" />
+						<xs:attribute type="xs:string" name="period" use="optional" />
+						<xs:attribute type="xs:string" name="cat" use="optional" />
+						<xs:attribute type="xs:string" name="bus_name" use="optional" />
+						<xs:attribute type="xs:int" name="bus_capacity" use="optional" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute type="xs:string" name="hash" />
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

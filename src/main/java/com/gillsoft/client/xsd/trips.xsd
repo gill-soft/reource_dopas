@@ -1,0 +1,48 @@
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="trip_package">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="trips">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="trip" maxOccurs="unbounded"
+								minOccurs="0">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute type="xs:string" name="id" use="optional" />
+											<xs:attribute type="xs:string" name="fist_point_name"
+												use="optional" />
+											<xs:attribute type="xs:string" name="first_point_code"
+												use="optional" />
+											<xs:attribute type="xs:string" name="last_point_name"
+												use="optional" />
+											<xs:attribute type="xs:string" name="last_point_code"
+												use="optional" />
+											<xs:attribute type="xs:string" name="number"
+												use="optional" />
+											<xs:attribute type="xs:decimal" name="price"
+												use="optional" />
+											<xs:attribute type="xs:string" name="from_arrival"
+												use="optional" />
+											<xs:attribute type="xs:string" name="from_departure"
+												use="optional" />
+											<xs:attribute type="xs:string" name="to_arrival"
+												use="optional" />
+											<xs:attribute type="xs:string" name="to_departure"
+												use="optional" />
+											<xs:attribute type="xs:string" name="tu_mark"
+												use="optional" />
+											<xs:attribute type="xs:int" name="seats" use="optional" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
