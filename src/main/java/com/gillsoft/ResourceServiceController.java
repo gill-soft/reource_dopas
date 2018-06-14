@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import com.gillsoft.abstract_service.AbstractResourceService;
+import com.gillsoft.abstract_rest_service.AbstractResourceService;
 import com.gillsoft.model.Method;
 import com.gillsoft.model.Ping;
 import com.gillsoft.model.Resource;
@@ -22,7 +22,7 @@ public class ResourceServiceController extends AbstractResourceService {
 	}
 
 	@Override
-	public List<Method> getMethods() {
+	public List<Method> getAvailableMethods() {
 		List<Method> methods = new ArrayList<>();
 		addMethod(methods, "Resource activity check", Method.PING);
 		addMethod(methods, "Information about resource", Method.INFO);
