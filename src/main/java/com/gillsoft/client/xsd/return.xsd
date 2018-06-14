@@ -5,105 +5,121 @@
 			<xs:sequence>
 				<xs:element name="ticket">
 					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:string" name="no" />
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="race">
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:string" name="code" />
+								<xs:attribute type="xs:string" name="text" />
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="from">
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:string" name="text" />
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="to">
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:string" name="text" />
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="departure">
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:date" name="date" />
+								<xs:attribute type="xs:time" name="time" />
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="place">
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:string" name="number" />
+								<xs:attribute type="xs:string" name="text" />
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="tariffs">
+					<xs:complexType>
 						<xs:sequence>
-							<xs:element name="race">
+							<xs:element name="tariff" maxOccurs="unbounded"
+								minOccurs="0">
 								<xs:complexType>
 									<xs:simpleContent>
 										<xs:extension base="xs:string">
-											<xs:attribute type="xs:string" name="code" />
-											<xs:attribute type="xs:string" name="text" />
+											<xs:attribute type="xs:decimal" name="cash" use="optional" />
+											<xs:attribute type="xs:string" name="text" use="optional" />
+											<xs:attribute type="xs:string" name="tax_group"
+												use="optional" />
+											<xs:attribute type="xs:int" name="tax_rate" use="optional" />
+											<xs:attribute type="xs:byte" name="tax_inner"
+												use="optional" />
 										</xs:extension>
 									</xs:simpleContent>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="from">
-								<xs:complexType>
-									<xs:simpleContent>
-										<xs:extension base="xs:string">
-											<xs:attribute type="xs:string" name="text" />
-										</xs:extension>
-									</xs:simpleContent>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="to">
-								<xs:complexType>
-									<xs:simpleContent>
-										<xs:extension base="xs:string">
-											<xs:attribute type="xs:string" name="text" />
-										</xs:extension>
-									</xs:simpleContent>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="departure">
-								<xs:complexType>
-									<xs:simpleContent>
-										<xs:extension base="xs:string">
-											<xs:attribute type="xs:date" name="date" />
-											<xs:attribute type="xs:time" name="time" />
-										</xs:extension>
-									</xs:simpleContent>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="place">
-								<xs:complexType>
-									<xs:simpleContent>
-										<xs:extension base="xs:string">
-											<xs:attribute type="xs:string" name="number" />
-											<xs:attribute type="xs:string" name="text" />
-										</xs:extension>
-									</xs:simpleContent>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="tariffs">
-								<xs:complexType>
-									<xs:choice maxOccurs="unbounded" minOccurs="0">
-										<xs:element name="tariff">
-											<xs:complexType>
-												<xs:simpleContent>
-													<xs:extension base="xs:string">
-														<xs:attribute type="xs:decimal" name="cash"
-															use="optional" />
-														<xs:attribute type="xs:string" name="text"
-															use="optional" />
-														<xs:attribute type="xs:string" name="tax_group"
-															use="optional" />
-														<xs:attribute type="xs:int" name="tax_rate"
-															use="optional" />
-														<xs:attribute type="xs:byte" name="tax_inner"
-															use="optional" />
-													</xs:extension>
-												</xs:simpleContent>
-											</xs:complexType>
-										</xs:element>
-									</xs:choice>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="taxes_totals">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element name="tax_totals" maxOccurs="unbounded"
-											minOccurs="0">
-											<xs:complexType>
-												<xs:simpleContent>
-													<xs:extension base="xs:string">
-														<xs:attribute type="xs:string" name="name"
-															use="optional" />
-														<xs:attribute type="xs:int" name="rate" use="optional" />
-														<xs:attribute type="xs:byte" name="inner"
-															use="optional" />
-														<xs:attribute type="xs:decimal" name="amount"
-															use="optional" />
-														<xs:attribute type="xs:decimal" name="tax_amount"
-															use="optional" />
-													</xs:extension>
-												</xs:simpleContent>
-											</xs:complexType>
-										</xs:element>
-									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
 						</xs:sequence>
-						<xs:attribute type="xs:string" name="no" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="taxes_totals">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="tax_totals" maxOccurs="unbounded"
+								minOccurs="0">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute type="xs:string" name="name" use="optional" />
+											<xs:attribute type="xs:int" name="rate" use="optional" />
+											<xs:attribute type="xs:byte" name="inner" use="optional" />
+											<xs:attribute type="xs:decimal" name="amount"
+												use="optional" />
+											<xs:attribute type="xs:decimal" name="tax_amount"
+												use="optional" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="money">
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:decimal" name="cash" />
+							</xs:extension>
+						</xs:simpleContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="refund">
+					<xs:complexType>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute type="xs:string" name="info" />
+							</xs:extension>
+						</xs:simpleContent>
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>

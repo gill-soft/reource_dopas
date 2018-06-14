@@ -1,5 +1,6 @@
 package com.gillsoft.client;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,8 +24,6 @@ import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.gillsoft.client.Salepoints.Salepoint;
-
 import sun.misc.BASE64Encoder;
 
 public class RestClient {
@@ -44,6 +43,7 @@ public class RestClient {
 	public static final String DATE_FORMAT = "yyyy-MM-dd";
 	public static final String FULL_DATE_FORMAT = "yyyy-MM-dd HH:mm";
 	public static final String TIME_FORMAT = "HH:mm";
+	public static final String DECIMAL_FORMAT = "%.5f";
 	
 	private static FastDateFormat dateFormat = FastDateFormat.getInstance(DATE_FORMAT);
 	
@@ -172,15 +172,15 @@ public class RestClient {
 		return sendRequest(uri).getSeats();
 	}
 	
-	public ResResult getTickets(String ip, String to, String id, Date when, String transactionId, int seatsCount,
+	public ResResult getTickets(String ip, String tripId, String to, Date when, String transactionId, int seatsCount,
 			String places) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", GET_TICKETS)
 				.queryParam("postid", Config.getOrganisation())
 				.queryParam("to", to)
 				.queryParam("when", dateFormat.format(when))
-				.queryParam("id", id)
-				.queryParam("resid", id)
+				.queryParam("id", tripId)
+				.queryParam("resid", transactionId)
 				.queryParam(places == null || places.isEmpty() ? "seats" : "places",
 						places == null || places.isEmpty() ? seatsCount : places)
 				.build().toUri();
@@ -196,6 +196,25 @@ public class RestClient {
 				.queryParam("signature", getSignature(transactionId, status, Config.getKey()))
 				.build().toUri();
 		return sendRequest(uri).getAccepted();
+	}
+	
+	public Information getReturnInfo(String ip, String ticketId) throws Error {
+		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
+				.queryParam("Action", RETURN)
+				.queryParam("postid", Config.getOrganisation())
+				.queryParam("ticket", ticketId)
+				.build().toUri();
+		return sendRequest(uri).getInformation();
+	}
+	
+	public Confirmed getConfirmReturn(String ip, String ticketId, BigDecimal percent) throws Error {
+		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
+				.queryParam("Action", CONFIRM_RETURN)
+				.queryParam("postid", Config.getOrganisation())
+				.queryParam("ticket", ticketId)
+				.queryParam("percent", String.format(DECIMAL_FORMAT, percent))
+				.build().toUri();
+		return sendRequest(uri).getConfirmed();
 	}
 	
 	private Response sendRequest(URI uri) throws Error {

@@ -9,6 +9,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class Response {
 
 	private Accepted accepted;
+	private Confirmed confirmed;
 	private Error error;
 	private Information information;
 	private ResResult resResult;
@@ -20,6 +21,10 @@ public class Response {
 
 	public Accepted getAccepted() {
 		return accepted;
+	}
+
+	public Confirmed getConfirmed() {
+		return confirmed;
 	}
 
 	public Error getError() {
