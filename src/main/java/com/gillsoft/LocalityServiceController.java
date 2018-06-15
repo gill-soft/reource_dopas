@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.springframework.web.bind.annotation.RestController;
+
 import com.gillsoft.abstract_rest_service.AbstractLocalityService;
 import com.gillsoft.client.Error;
 import com.gillsoft.client.RestClient;
@@ -22,6 +24,7 @@ import com.gillsoft.model.Locality;
 import com.gillsoft.model.request.LocalityRequest;
 import com.google.common.collect.Lists;
 
+@RestController
 public class LocalityServiceController extends AbstractLocalityService {
 	
 	private static Set<Locality> all;
