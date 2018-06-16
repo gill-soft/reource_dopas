@@ -17,7 +17,7 @@ public class ResourceServiceController extends AbstractResourceService {
 	public Resource getInfo() {
 		Resource resource = new Resource();
 		resource.setCode("DOPAS");
-		resource.setName("Днепропетровский ОПАС");
+		resource.setName("Р”РЅРµРїСЂРѕРїРµС‚СЂРѕРІСЃРєРёР№ РћРџРђРЎ");
 		return resource;
 	}
 

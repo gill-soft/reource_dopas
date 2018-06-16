@@ -62,15 +62,15 @@ public class RestClient {
     private final static Map<Integer, String> ERROR_CODES = new HashMap<>();
     
     static {
-		ERROR_CODES.put(5001, "Попытка вернуть билет чужой организации.");
-		ERROR_CODES.put(5002, "Указанный билет не найден в базе данных.");
-		ERROR_CODES.put(5003, "По данному билету уже оформлен возврат.");
-		ERROR_CODES.put(5004, "Операция оплаты по данному билету была отменена.");
-		ERROR_CODES.put(5006, "Пригородные билеты после отправления не возвращаются.");
-		ERROR_CODES.put(5007, "Пассажир воспользовался поездкой.");
-		ERROR_CODES.put(5008, "Неправильная длина номера билета. Билет не найден");
-		ERROR_CODES.put(5009, "Не найдена информация о продаже билета.");
-		ERROR_CODES.put(5010, "Операция оплаты по данному билету не была произведена.");
+		ERROR_CODES.put(5001, "РџРѕРїС‹С‚РєР° РІРµСЂРЅСѓС‚СЊ Р±РёР»РµС‚ С‡СѓР¶РѕР№ РѕСЂРіР°РЅРёР·Р°С†РёРё.");
+		ERROR_CODES.put(5002, "РЈРєР°Р·Р°РЅРЅС‹Р№ Р±РёР»РµС‚ РЅРµ РЅР°Р№РґРµРЅ РІ Р±Р°Р·Рµ РґР°РЅРЅС‹С….");
+		ERROR_CODES.put(5003, "РџРѕ РґР°РЅРЅРѕРјСѓ Р±РёР»РµС‚Сѓ СѓР¶Рµ РѕС„РѕСЂРјР»РµРЅ РІРѕР·РІСЂР°С‚.");
+		ERROR_CODES.put(5004, "РћРїРµСЂР°С†РёСЏ РѕРїР»Р°С‚С‹ РїРѕ РґР°РЅРЅРѕРјСѓ Р±РёР»РµС‚Сѓ Р±С‹Р»Р° РѕС‚РјРµРЅРµРЅР°.");
+		ERROR_CODES.put(5006, "РџСЂРёРіРѕСЂРѕРґРЅС‹Рµ Р±РёР»РµС‚С‹ РїРѕСЃР»Рµ РѕС‚РїСЂР°РІР»РµРЅРёСЏ РЅРµ РІРѕР·РІСЂР°С‰Р°СЋС‚СЃСЏ.");
+		ERROR_CODES.put(5007, "РџР°СЃСЃР°Р¶РёСЂ РІРѕСЃРїРѕР»СЊР·РѕРІР°Р»СЃСЏ РїРѕРµР·РґРєРѕР№.");
+		ERROR_CODES.put(5008, "РќРµРїСЂР°РІРёР»СЊРЅР°СЏ РґР»РёРЅР° РЅРѕРјРµСЂР° Р±РёР»РµС‚Р°. Р‘РёР»РµС‚ РЅРµ РЅР°Р№РґРµРЅ");
+		ERROR_CODES.put(5009, "РќРµ РЅР°Р№РґРµРЅР° РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїСЂРѕРґР°Р¶Рµ Р±РёР»РµС‚Р°.");
+		ERROR_CODES.put(5010, "РћРїРµСЂР°С†РёСЏ РѕРїР»Р°С‚С‹ РїРѕ РґР°РЅРЅРѕРјСѓ Р±РёР»РµС‚Сѓ РЅРµ Р±С‹Р»Р° РїСЂРѕРёР·РІРµРґРµРЅР°.");
     }
 	
 	private static RestClient instance;
@@ -94,7 +94,7 @@ public class RestClient {
 	
 	public RestTemplate createNewPoolingTemplate() {
 		
-		// создаем пул соединений
+		// СЃРѕР·РґР°РµРј РїСѓР» СЃРѕРµРґРёРЅРµРЅРёР№
 		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
 		connectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(Config.getUrl())), 300);
 		
@@ -102,7 +102,7 @@ public class RestClient {
 		        .setConnectionManager(connectionManager)
 		        .build();
 		
-		// настраиваем таймауты
+		// РЅР°СЃС‚СЂР°РёРІР°РµРј С‚Р°Р№РјР°СѓС‚С‹
 		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
 		factory.setConnectTimeout(1000);
 		factory.setConnectionRequestTimeout(Config.getRequestTimeout());
