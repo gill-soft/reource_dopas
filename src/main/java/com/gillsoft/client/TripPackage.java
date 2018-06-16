@@ -77,6 +77,8 @@ public class TripPackage {
 
     @XmlElement(required = true)
     protected TripPackage.Trips trips;
+    
+    private Error error;
 
     /**
      * Gets the value of the trips property.
@@ -103,7 +105,15 @@ public class TripPackage {
     }
 
 
-    /**
+    public Error getError() {
+		return error;
+	}
+
+	public void setError(Error error) {
+		this.error = error;
+	}
+
+	/**
      * <p>Java class for anonymous complex type.
      * 
      * <p>The following schema fragment specifies the expected content contained within this class.

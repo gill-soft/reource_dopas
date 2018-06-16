@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Date;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,7 +134,7 @@ public class RestClient {
 		return getStationsInfo(ip, GET_HASH);
 	}
 	
-	public Stations getStationsInfo(String ip, String method) throws Error {
+	private Stations getStationsInfo(String ip, String method) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", method)
 				.queryParam("postid", Config.getOrganisation())
