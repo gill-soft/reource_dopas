@@ -105,7 +105,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 				callables.add(() -> {
 					try {
 						TripPackage tripPackage = RestClient.getInstance().getTrips(
-								pair[0].split(";")[1], pair[1], date);
+								pair[0].split(";")[1], pair[1].split(";")[2], date);
 						addRequest(tripPackage, pair, date);
 						return tripPackage;
 					} catch (Error e) {
@@ -203,9 +203,10 @@ public class SearchServiceController extends AbstractTripSearchService {
 			container.setTrips(trips);
 		}
 		if (tripPackage.getError() != null) {
-			container.setError(new java.lang.Error(String.format("code: %s message: %s",
+			container.setError(new java.lang.Error(String.format("code: %s1 message: %s2",
 					tripPackage.getError().getCode(), tripPackage.getError().getMessage())));
 		}
+		containers.add(container);
 	}
 
 }

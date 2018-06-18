@@ -108,7 +108,7 @@ public class LocalityServiceController extends AbstractLocalityService {
 				List<Locality> localities = new CopyOnWriteArrayList<>();
 				for (Station station : stations.getStation()) {
 					Locality arrival = new Locality();
-					arrival.setId(station.getId());
+					arrival.setId(String.join(";", salepoint.getId(), salepoint.getIp(), station.getId()));
 					arrival.setName(Lang.UA, station.getName());
 					localities.add(arrival);
 				}
