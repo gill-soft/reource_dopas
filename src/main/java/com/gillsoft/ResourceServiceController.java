@@ -14,7 +14,7 @@ import com.gillsoft.model.Resource;
 public class ResourceServiceController extends AbstractResourceService {
 
 	@Override
-	public Resource getInfo() {
+	public Resource getInfoResponse() {
 		Resource resource = new Resource();
 		resource.setCode("DOPAS");
 		resource.setName("Днепропетровский ОПАС");
@@ -22,7 +22,7 @@ public class ResourceServiceController extends AbstractResourceService {
 	}
 
 	@Override
-	public List<Method> getAvailableMethods() {
+	public List<Method> getAvailableMethodsResponse() {
 		List<Method> methods = new ArrayList<>();
 		addMethod(methods, "Resource activity check", Method.PING);
 		addMethod(methods, "Information about resource", Method.INFO);
@@ -38,7 +38,7 @@ public class ResourceServiceController extends AbstractResourceService {
 	}
 
 	@Override
-	public Ping ping(String id) {
+	public Ping pingResponse(String id) {
 		Ping ping = new Ping();
 		ping.setId(id);
 		return ping;

@@ -31,12 +31,12 @@ public class LocalityServiceController extends AbstractLocalityService {
 	private static Map<Locality, List<Locality>> binding;
 
 	@Override
-	public List<Locality> getAll(LocalityRequest request) {
+	public List<Locality> getAllResponse(LocalityRequest request) {
 		return getAllLocalities(request);
 	}
 
 	@Override
-	public Map<String, List<String>> getBinding(LocalityRequest request) {
+	public Map<String, List<String>> getBindingResponse(LocalityRequest request) {
 		createLocalities();
 		if (binding != null) {
 			Map<String, List<String>> result = new HashMap<>();
@@ -55,7 +55,7 @@ public class LocalityServiceController extends AbstractLocalityService {
 	}
 
 	@Override
-	public List<Locality> getUsed(LocalityRequest request) {
+	public List<Locality> getUsedResponse(LocalityRequest request) {
 		return getAllLocalities(request);
 	}
 	

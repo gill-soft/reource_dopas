@@ -19,6 +19,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 
+import com.gillsoft.model.request.TripSearchRequest;
+
 
 /**
  * <p>Java class for anonymous complex type.
@@ -71,14 +73,20 @@ import javax.xml.bind.annotation.XmlValue;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "trips"
+    "trips",
+    "error",
+    "request"
 })
 public class TripPackage {
 
     @XmlElement(required = true)
     protected TripPackage.Trips trips;
     
+    @XmlElement(required = false)
     private Error error;
+    
+    @XmlElement(required = false)
+    private TripSearchRequest request;
 
     /**
      * Gets the value of the trips property.
@@ -111,6 +119,14 @@ public class TripPackage {
 
 	public void setError(Error error) {
 		this.error = error;
+	}
+
+	public TripSearchRequest getRequest() {
+		return request;
+	}
+
+	public void setRequest(TripSearchRequest request) {
+		this.request = request;
 	}
 
 	/**

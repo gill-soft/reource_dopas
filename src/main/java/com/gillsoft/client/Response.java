@@ -2,6 +2,7 @@ package com.gillsoft.client;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -12,11 +13,15 @@ public class Response {
 	private Confirmed confirmed;
 	private Error error;
 	private Information information;
+	
+	@XmlElement(name = "res_result")
 	private ResResult resResult;
 	private Salepoints salepoints;
 	private Schedule schedule;
 	private Seats seats;
 	private Stations stations;
+	
+	@XmlElement(name = "trip_package")
 	private TripPackage tripPackage;
 
 	public Accepted getAccepted() {
