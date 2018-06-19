@@ -23,6 +23,7 @@ import com.gillsoft.cache.IOCacheException;
 import com.gillsoft.cache.MemoryCacheHandler;
 import com.gillsoft.client.Error;
 import com.gillsoft.client.RestClient;
+import com.gillsoft.client.Seats;
 import com.gillsoft.client.TripPackage;
 import com.gillsoft.concurrent.PoolType;
 import com.gillsoft.concurrent.ThreadPoolStore;
@@ -37,6 +38,8 @@ import com.gillsoft.model.RestError;
 import com.gillsoft.model.ReturnCondition;
 import com.gillsoft.model.Route;
 import com.gillsoft.model.Seat;
+import com.gillsoft.model.SeatStatus;
+import com.gillsoft.model.SeatType;
 import com.gillsoft.model.SeatsScheme;
 import com.gillsoft.model.Segment;
 import com.gillsoft.model.Trip;
@@ -95,8 +98,27 @@ public class SearchServiceController extends AbstractTripSearchService {
 	}
 	
 	@Override
-	public List<Seat> getSeatsResponse(String arg0) {
-		// TODO Auto-generated method stub
+	public List<Seat> getSeatsResponse(String tripId) {
+		String[] params = tripId.split(";");
+		try {
+			Seats seats = RestClient.getInstance().getSeats(params[0], params[1], params[2], params[3]);
+			if (seats != null
+					&& !seats.getSeat().isEmpty()) {
+				List<Seat> resSeats = new ArrayList<>();
+				for (Seats.Seat seat : seats.getSeat()) {
+					Seat newSeat = new Seat();
+					newSeat.setId(seat.getNum());
+					newSeat.setNumber(seat.getNum());
+					newSeat.setStatus(SeatStatus.FREE);
+					newSeat.setType(SeatType.SEAT);
+					resSeats.add(newSeat);
+				}
+				return resSeats;
+			}
+		} catch (Error e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return null;
 	}
 
@@ -224,12 +246,20 @@ public class SearchServiceController extends AbstractTripSearchService {
 				&& tripPackage.getTrips() != null) {
 			
 			List<Trip> trips = new ArrayList<>();
-			for (com.gillsoft.client.TripPackage.Trips.Trip trip : tripPackage.getTrips().getTrip()) {
+			for (TripPackage.Trips.Trip trip : tripPackage.getTrips().getTrip()) {
 				
 				// сегменты
 				Trip resTrip = new Trip();
 				resTrip.setId(addSegment(vehicles, localities, segments, trip));
 				trips.add(resTrip);
+			}
+			// делаем ид, по которому сможем продать
+			for (Segment segment : segments.values()) {
+				segment.setId(String.join(";",
+						tripPackage.getRequest().getLocalityPairs().get(0)[0].split(";")[1],
+						tripPackage.getRequest().getLocalityPairs().get(0)[1].split(";")[2],
+						RestClient.dateFormat.format(tripPackage.getRequest().getDates().get(0)),
+						segment.getId()));
 			}
 			container.setTrips(trips);
 		}
@@ -240,7 +270,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 	}
 	
 	private String addSegment(Map<String, Vehicle> vehicles, Map<String, Locality> localities,
-			Map<String, Segment> segments, com.gillsoft.client.TripPackage.Trips.Trip trip) {
+			Map<String, Segment> segments, TripPackage.Trips.Trip trip) {
 		
 		// сегменты
 		String segmentKey = StringUtil.md5(String.join(";", trip.getId(), trip.getFirstPointCode(),
@@ -263,7 +293,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 		return segmentKey;
 	}
 	
-	private void setSegmentFields(Segment segment, com.gillsoft.client.TripPackage.Trips.Trip trip) {
+	private void setSegmentFields(Segment segment, TripPackage.Trips.Trip trip) {
 		
 		// рейс
 		segment.setId(trip.getId());
@@ -295,8 +325,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 		tripPrice.setFare(fare);
 	}
 	
-	private void addVehicle(Map<String, Vehicle> vehicles, Segment segment,
-			com.gillsoft.client.TripPackage.Trips.Trip trip) {
+	private void addVehicle(Map<String, Vehicle> vehicles, Segment segment, TripPackage.Trips.Trip trip) {
 		String vehicleKey = StringUtil.md5(trip.getTuMark());
 		Vehicle vehicle = vehicles.get(vehicleKey);
 		if (vehicle == null) {

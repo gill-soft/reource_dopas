@@ -7,22 +7,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.http.HttpHost;
-import org.apache.http.client.HttpClient;
-import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
-import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import com.gillsoft.util.RestTemplateUtil;
 
 import sun.misc.BASE64Encoder;
 
@@ -94,31 +86,11 @@ public class RestClient {
 	}
 	
 	public RestTemplate createNewPoolingTemplate() {
-		
-		// создаем пул соединений
-		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-		connectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(Config.getUrl())), 300);
-		
-		HttpClient httpClient = HttpClients.custom()
-		        .setConnectionManager(connectionManager)
-		        .build();
-		
-		// настраиваем таймауты
-		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-		factory.setConnectTimeout(1000);
-		factory.setConnectionRequestTimeout(Config.getRequestTimeout());
-		factory.setHttpClient(httpClient);
-		
-		RestTemplate template = new RestTemplate(new BufferingClientHttpRequestFactory(factory));
-		template.setMessageConverters(getMessageConverters());
+		RestTemplate template = new RestTemplate(new BufferingClientHttpRequestFactory(
+				RestTemplateUtil.createPoolingFactory(Config.getUrl(), 300, Config.getRequestTimeout())));
+		template.setMessageConverters(RestTemplateUtil.getMarshallingMessageConverters(Response.class));
 		template.setInterceptors(Collections.singletonList(new RequestResponseLoggingInterceptor()));
 		return template;
-	}
-	
-	private List<HttpMessageConverter<?>> getMessageConverters() {
-		Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
-		marshaller.setClassesToBeBound(Response.class);
-		return Collections.singletonList(new MarshallingHttpMessageConverter(marshaller, marshaller));
 	}
 	
 	public Salepoints getSalepoints() throws Error {
@@ -162,13 +134,13 @@ public class RestClient {
 		return sendRequest(uri).getTripPackage();
 	}
 	
-	public Seats getSeats(String ip, String to, String id, Date when) throws Error {
+	public Seats getSeats(String ip, String to, String tripId, String when) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", GET_SEATS)
 				.queryParam("postid", Config.getOrganisation())
 				.queryParam("to", to)
-				.queryParam("when", dateFormat.format(when))
-				.queryParam("id", id)
+				.queryParam("when", when)
+				.queryParam("id", tripId)
 				.build().toUri();
 		return sendRequest(uri).getSeats();
 	}
