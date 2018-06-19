@@ -27,23 +27,25 @@ public class RequestResponseLoggingInterceptor implements ClientHttpRequestInter
 	}
 
 	private void logRequest(String id, HttpRequest request, byte[] body) throws IOException {
-		LOGGER.info("==============request begin==============");
-		LOGGER.info("Exchange id  : {}", id);
-		LOGGER.info("URI          : {}", request.getURI());
-		LOGGER.info("Method       : {}", request.getMethod());
-		LOGGER.info("Headers      : {}", request.getHeaders());
-		LOGGER.info("Request body : {}", new String(body, "UTF-8"));
-		LOGGER.info("==============request end================");
+		LOGGER.info(new StringBuilder().append("\n")
+				.append("==============request begin==============").append("\n")
+				.append("Exchange id  : ").append(id).append("\n")
+				.append("URI          : ").append(request.getURI()).append("\n")
+				.append("Method       : ").append(request.getMethod()).append("\n")
+				.append("Headers      : ").append(request.getHeaders()).append("\n")
+				.append("Request body : ").append(new String(body, Charset.defaultCharset())).append("\n")
+				.append("==============request end================").toString());
 	}
 
 	private void logResponse(String id, ClientHttpResponse response) throws IOException {
-		LOGGER.info("==============response begin=============");
-		LOGGER.info("Exchange id  : {}", id);
-		LOGGER.info("Status code  : {}", response.getStatusCode());
-		LOGGER.info("Status text  : {}", response.getStatusText());
-		LOGGER.info("Headers      : {}", response.getHeaders());
-		LOGGER.info("Response body: {}", StreamUtils.copyToString(response.getBody(), Charset.defaultCharset()));
-		LOGGER.info("==============response end===============");
+		LOGGER.info(new StringBuilder().append("\n")
+				.append("==============response begin=============").append("\n")
+				.append("Exchange id  : ").append(id).append("\n")
+				.append("Status code  : ").append(response.getStatusCode()).append("\n")
+				.append("Status text  : ").append(response.getStatusText()).append("\n")
+				.append("Headers      : ").append(response.getHeaders()).append("\n")
+				.append("Response body: ").append(StreamUtils.copyToString(response.getBody(), Charset.defaultCharset())).append("\n")
+				.append("==============response end===============").toString());
 	}
 
 }

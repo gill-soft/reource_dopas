@@ -1,5 +1,7 @@
 package com.gillsoft;
 
+import java.math.BigDecimal;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,17 +26,25 @@ import com.gillsoft.client.RestClient;
 import com.gillsoft.client.TripPackage;
 import com.gillsoft.concurrent.PoolType;
 import com.gillsoft.concurrent.ThreadPoolStore;
+import com.gillsoft.model.Currency;
 import com.gillsoft.model.Document;
 import com.gillsoft.model.Fare;
+import com.gillsoft.model.Lang;
+import com.gillsoft.model.Locality;
+import com.gillsoft.model.Price;
 import com.gillsoft.model.Required;
+import com.gillsoft.model.RestError;
 import com.gillsoft.model.ReturnCondition;
 import com.gillsoft.model.Route;
 import com.gillsoft.model.Seat;
 import com.gillsoft.model.SeatsScheme;
+import com.gillsoft.model.Segment;
 import com.gillsoft.model.Trip;
 import com.gillsoft.model.TripContainer;
+import com.gillsoft.model.Vehicle;
 import com.gillsoft.model.request.TripSearchRequest;
 import com.gillsoft.model.response.TripSearchResponse;
+import com.gillsoft.util.StringUtil;
 
 @RestController
 public class SearchServiceController extends AbstractTripSearchService {
@@ -55,12 +66,6 @@ public class SearchServiceController extends AbstractTripSearchService {
 
 	@Override
 	public List<Fare> getFaresResponse(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Trip getInfoResponse(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -104,14 +109,15 @@ public class SearchServiceController extends AbstractTripSearchService {
 			for (final String[] pair : request.getLocalityPairs()) {
 				callables.add(() -> {
 					try {
+						validateSearchParams(pair, date);
 						TripPackage tripPackage = RestClient.getInstance().getTrips(
 								pair[0].split(";")[1], pair[1].split(";")[2], date);
-						addRequest(tripPackage, pair, date);
+						SearchServiceController.addRequest(tripPackage, pair, date);
 						return tripPackage;
 					} catch (Error e) {
 						TripPackage tripPackage = new TripPackage();
 						tripPackage.setError(e);
-						addRequest(tripPackage, pair, date);
+						SearchServiceController.addRequest(tripPackage, pair, date);
 						return tripPackage;
 					}
 				});
@@ -119,6 +125,23 @@ public class SearchServiceController extends AbstractTripSearchService {
 		}
 		// запускаем задания и полученные ссылки кладем в кэш
 		return putToCache(ThreadPoolStore.executeAll(PoolType.SEARCH, callables));
+	}
+	
+	private static void validateSearchParams(String[] pair, Date date) throws Error {
+		if (date == null
+				|| date.getTime() < new Date().getTime()) {
+			Error error = new Error();
+			error.setName("Invalid parameter \"date\"");
+			throw error;
+		}
+		if (pair == null || pair.length < 2
+				|| pair[0] == null || pair[1] == null
+				|| pair[0].split(";").length < 2
+				|| pair[1].split(";").length < 3) {
+			Error error = new Error();
+			error.setName("Invalid parameter \"pair\"");
+			throw error;
+		}
 	}
 	
 	private static void addRequest(TripPackage tripPackage, String[] pair, Date date) {
@@ -160,13 +183,16 @@ public class SearchServiceController extends AbstractTripSearchService {
 			// список ссылок, по которым нет еще результата
 			List<Future<TripPackage>> otherFutures = new CopyOnWriteArrayList<>();
 			
-			// идем по ссылка и из выполненных берем результат, а с
-			// невыполненных формируем список для следующего запроса результат
+			// идем по ссылкам и из выполненных берем результат, а с
+			// невыполненных формируем список для следующего запроса результата
+			Map<String, Vehicle> vehicles = new HashMap<>();
+			Map<String, Locality> localities = new HashMap<>();
+			Map<String, Segment> segments = new HashMap<>();
 			List<TripContainer> containers = new ArrayList<>();
 			for (Future<TripPackage> future : futures) {
 				if (future.isDone()) {
 					try {
-						addResult(containers, future.get());
+						addResult(vehicles, localities, segments, containers, future.get());
 					} catch (InterruptedException | ExecutionException e) {
 					}
 				} else {
@@ -180,6 +206,9 @@ public class SearchServiceController extends AbstractTripSearchService {
 			} else {
 				response = new TripSearchResponse();
 			}
+			response.setVehicles(vehicles);
+			response.setLocalities(localities);
+			response.setSegments(segments);
 			response.setTripContainers(containers);
 			return response;
 		} catch (IOCacheException e) {
@@ -187,26 +216,107 @@ public class SearchServiceController extends AbstractTripSearchService {
 		}
 	}
 	
-	private void addResult(List<TripContainer> containers, TripPackage tripPackage) {
+	private void addResult(Map<String, Vehicle> vehicles, Map<String, Locality> localities,
+			Map<String, Segment> segments, List<TripContainer> containers, TripPackage tripPackage) {
 		TripContainer container = new TripContainer();
 		container.setRequest(tripPackage.getRequest());
 		if (tripPackage != null
 				&& tripPackage.getTrips() != null) {
+			
 			List<Trip> trips = new ArrayList<>();
 			for (com.gillsoft.client.TripPackage.Trips.Trip trip : tripPackage.getTrips().getTrip()) {
+				
+				// сегменты
 				Trip resTrip = new Trip();
-				resTrip.setId(trip.getId());
-				resTrip.setNumber(trip.getNumber());
-				// TODO other properties
+				resTrip.setId(addSegment(vehicles, localities, segments, trip));
 				trips.add(resTrip);
 			}
 			container.setTrips(trips);
 		}
 		if (tripPackage.getError() != null) {
-			container.setError(new java.lang.Error(String.format("code: %s1 message: %s2",
-					tripPackage.getError().getCode(), tripPackage.getError().getMessage())));
+			container.setError(new RestError(tripPackage.getError().getMessage()));
 		}
 		containers.add(container);
+	}
+	
+	private String addSegment(Map<String, Vehicle> vehicles, Map<String, Locality> localities,
+			Map<String, Segment> segments, com.gillsoft.client.TripPackage.Trips.Trip trip) {
+		
+		// сегменты
+		String segmentKey = StringUtil.md5(String.join(";", trip.getId(), trip.getFirstPointCode(),
+				trip.getLastPointCode(), trip.getFromDeparture(), trip.getToArrival(), trip.getPrice().toString()));
+		Segment segment = segments.get(segmentKey);
+		if (segment == null) {
+			segment = new Segment();
+			
+			// автобусы
+			addVehicle(vehicles, segment, trip);
+			
+			// станции
+			segment.setDepartureId(addStation(localities, trip.getFirstPointCode(), trip.getFistPointName()));
+			segment.setArrivalId(addStation(localities, trip.getLastPointCode(), trip.getLastPointName()));
+			
+			setSegmentFields(segment, trip);
+			
+			segments.put(segmentKey, segment);
+		}
+		return segmentKey;
+	}
+	
+	private void setSegmentFields(Segment segment, com.gillsoft.client.TripPackage.Trips.Trip trip) {
+		
+		// рейс
+		segment.setId(trip.getId());
+		segment.setNumber(trip.getNumber());
+		segment.setFreeSeatsCount(trip.getSeats());
+		try {
+			segment.setDepartureDate(RestClient.fullDateFormat.parse(trip.getFromDeparture()));
+			
+			// есть только время прибытия, по-этому берем дату с отправления
+			segment.setArrivalDate(RestClient.fullDateFormat.parse(
+					String.join(" ", RestClient.dateFormat.format(segment.getDepartureDate()), trip.getToArrival())));
+			
+			// если отправление больше прибытия, то добавляем день к прибытию
+			if (segment.getArrivalDate().getTime() < segment.getDepartureDate().getTime()) {
+				segment.setArrivalDate(DateUtils.addDays(segment.getArrivalDate(), 1));
+			}
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		addPrice(segment, trip.getPrice());
+	}
+	
+	private void addPrice(Segment segment, BigDecimal price) {
+		Price tripPrice = new Price();
+		Fare fare = new Fare();
+		fare.setValue(price);
+		tripPrice.setCurrency(Currency.UAH);
+		tripPrice.setAmount(price);
+		tripPrice.setFare(fare);
+	}
+	
+	private void addVehicle(Map<String, Vehicle> vehicles, Segment segment,
+			com.gillsoft.client.TripPackage.Trips.Trip trip) {
+		String vehicleKey = StringUtil.md5(trip.getTuMark());
+		Vehicle vehicle = vehicles.get(vehicleKey);
+		if (vehicle == null) {
+			vehicle = new Vehicle();
+			vehicle.setModel(trip.getTuMark());
+			vehicles.put(vehicleKey, vehicle);
+		}
+		segment.setVehicleId(vehicleKey);
+	}
+	
+	private String addStation(Map<String, Locality> localities, String id, String name) {
+		String key = StringUtil.md5(String.join(";", id, name));
+		Locality locality = localities.get(key);
+		if (locality == null) {
+			locality = new Locality();
+			locality.setId(id);
+			locality.setName(Lang.UA, name);
+			localities.put(key, locality);
+		}
+		return key;
 	}
 
 }

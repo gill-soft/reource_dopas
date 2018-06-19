@@ -88,6 +88,11 @@ public class Error extends Exception {
     	}
     	return message.toString();
     }
+    
+    @Override
+    public StackTraceElement[] getStackTrace() {
+    	return null;
+    }
 
     /**
      * Gets the value of the code property.

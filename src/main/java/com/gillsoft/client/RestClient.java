@@ -45,7 +45,8 @@ public class RestClient {
 	public static final String TIME_FORMAT = "HH:mm";
 	public static final String DECIMAL_FORMAT = "%.5f";
 	
-	private static FastDateFormat dateFormat = FastDateFormat.getInstance(DATE_FORMAT);
+	public final static FastDateFormat dateFormat = FastDateFormat.getInstance(DATE_FORMAT);
+	public final static FastDateFormat fullDateFormat = FastDateFormat.getInstance(FULL_DATE_FORMAT);
 	
 	public final static String TARIFF_1_CODE = "48";
     public final static String INSURANCE_CODE = "50";
