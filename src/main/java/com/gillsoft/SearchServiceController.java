@@ -258,8 +258,8 @@ public class SearchServiceController extends AbstractTripSearchService {
 				segment.setId(String.join(";",
 						tripPackage.getRequest().getLocalityPairs().get(0)[0].split(";")[1],
 						tripPackage.getRequest().getLocalityPairs().get(0)[1].split(";")[2],
-						RestClient.dateFormat.format(tripPackage.getRequest().getDates().get(0)),
-						segment.getId()));
+						segment.getId(),
+						RestClient.dateFormat.format(tripPackage.getRequest().getDates().get(0))));
 			}
 			container.setTrips(trips);
 		}
@@ -283,8 +283,8 @@ public class SearchServiceController extends AbstractTripSearchService {
 			addVehicle(vehicles, segment, trip);
 			
 			// станции
-			segment.setDepartureId(addStation(localities, trip.getFirstPointCode(), trip.getFistPointName()));
-			segment.setArrivalId(addStation(localities, trip.getLastPointCode(), trip.getLastPointName()));
+			segment.setDeparture(addStation(localities, trip.getFirstPointCode(), trip.getFistPointName()));
+			segment.setArrival(addStation(localities, trip.getLastPointCode(), trip.getLastPointName()));
 			
 			setSegmentFields(segment, trip);
 			
@@ -333,10 +333,10 @@ public class SearchServiceController extends AbstractTripSearchService {
 			vehicle.setModel(trip.getTuMark());
 			vehicles.put(vehicleKey, vehicle);
 		}
-		segment.setVehicleId(vehicleKey);
+		segment.setVehicle(new Vehicle(vehicleKey));
 	}
 	
-	private String addStation(Map<String, Locality> localities, String id, String name) {
+	private Locality addStation(Map<String, Locality> localities, String id, String name) {
 		String key = StringUtil.md5(String.join(";", id, name));
 		Locality locality = localities.get(key);
 		if (locality == null) {
@@ -345,7 +345,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 			locality.setName(Lang.UA, name);
 			localities.put(key, locality);
 		}
-		return key;
+		return new Locality(key);
 	}
 
 }
