@@ -3,6 +3,7 @@ package com.gillsoft;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -150,7 +151,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 	
 	private static void validateSearchParams(String[] pair, Date date) throws Error {
 		if (date == null
-				|| date.getTime() < new Date().getTime()) {
+				|| date.getTime() < DateUtils.truncate(new Date(), Calendar.DATE).getTime()) {
 			Error error = new Error();
 			error.setName("Invalid parameter \"date\"");
 			throw error;

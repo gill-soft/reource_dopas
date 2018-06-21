@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import org.springframework.web.bind.annotation.RestController;
+
 import com.gillsoft.abstract_rest_service.AbstractOrderService;
 import com.gillsoft.client.Error;
 import com.gillsoft.client.ResResult;
@@ -17,6 +19,7 @@ import com.gillsoft.client.RestClient;
 import com.gillsoft.model.CalcType;
 import com.gillsoft.model.Commission;
 import com.gillsoft.model.Currency;
+import com.gillsoft.model.Customer;
 import com.gillsoft.model.Locality;
 import com.gillsoft.model.Organisation;
 import com.gillsoft.model.Price;
@@ -30,6 +33,7 @@ import com.gillsoft.model.request.OrderRequest;
 import com.gillsoft.model.response.OrderResponse;
 import com.gillsoft.util.StringUtil;
 
+@RestController
 public class OrderServiceController extends AbstractOrderService {
 
 	@Override
@@ -85,7 +89,7 @@ public class OrderServiceController extends AbstractOrderService {
 					item.setNumber(ticket.getNo());
 					
 					// пассажир
-					item.setCustomer(request.getCustomers().get(
+					item.setCustomer(new Customer(
 							getTicketCustomer(items, ticket.getPlace().getNumber())));
 					
 					// рейс
@@ -179,6 +183,8 @@ public class OrderServiceController extends AbstractOrderService {
 						String.valueOf(tariff.getText())));
 			}
 		}
+		priceTariff.setName(priceTariff.getName().replaceFirst("^,", ""));
+		priceTariff.setCode(priceTariff.getCode().replaceFirst("^,", ""));
 		return priceTariff;
 	}
 	
