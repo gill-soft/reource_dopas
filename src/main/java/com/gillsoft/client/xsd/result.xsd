@@ -5,11 +5,11 @@
 			<xs:sequence>
 				<xs:element type="xs:byte" name="state" />
 				<xs:element type="xs:string" name="reason" />
-				<xs:element name="tickets" maxOccurs="unbounded"
-					minOccurs="0">
+				<xs:element name="tickets">
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element name="ticket">
+							<xs:element name="ticket" maxOccurs="unbounded"
+								minOccurs="0">
 								<xs:complexType>
 									<xs:sequence>
 										<xs:element name="race">
@@ -44,8 +44,8 @@
 											<xs:complexType>
 												<xs:simpleContent>
 													<xs:extension base="xs:string">
-														<xs:attribute type="xs:date" name="date" />
-														<xs:attribute type="xs:time" name="time" />
+														<xs:attribute type="xs:string" name="date" />
+														<xs:attribute type="xs:string" name="time" />
 													</xs:extension>
 												</xs:simpleContent>
 											</xs:complexType>
@@ -54,7 +54,7 @@
 											<xs:complexType>
 												<xs:simpleContent>
 													<xs:extension base="xs:string">
-														<xs:attribute type="xs:time" name="time" />
+														<xs:attribute type="xs:string" name="time" />
 													</xs:extension>
 												</xs:simpleContent>
 											</xs:complexType>
@@ -131,6 +131,8 @@
 																	<xs:attribute type="xs:string" name="text"
 																		use="optional" />
 																	<xs:attribute type="xs:string" name="tax_group"
+																		use="optional" />
+																	<xs:attribute type="xs:int" name="code"
 																		use="optional" />
 																	<xs:attribute type="xs:int" name="tax_rate"
 																		use="optional" />

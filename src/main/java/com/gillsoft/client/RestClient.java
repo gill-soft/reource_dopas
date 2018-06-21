@@ -40,12 +40,13 @@ public class RestClient {
 	public final static FastDateFormat dateFormat = FastDateFormat.getInstance(DATE_FORMAT);
 	public final static FastDateFormat fullDateFormat = FastDateFormat.getInstance(FULL_DATE_FORMAT);
 	
-	public final static String TARIFF_1_CODE = "48";
-    public final static String INSURANCE_CODE = "50";
-    public final static String STATION_CODE = "57";
-    public final static String TARIFF_2_CODE = "67";
-    public final static String REMOTE_CODE = "55";
-    public final static String ADVANCE_CODE = "68";
+	public final static int TARIFF_1_CODE = 48;
+    public final static int INSURANCE_CODE = 50;
+    public final static int STATION_CODE = 57;
+    public final static int TARIFF_2_CODE = 67;
+    public final static int REMOTE_CODE = 55;
+    public final static int ADVANCE_CODE = 68;
+    
     public final static String SIGNATURE_METHOD = "SHA1";
     public final static String SUCCESS_STATUS = "success";
     public final static String FAILURE_STATUS = "failure";
@@ -145,13 +146,13 @@ public class RestClient {
 		return sendRequest(uri).getSeats();
 	}
 	
-	public ResResult getTickets(String ip, String tripId, String to, Date when, String transactionId, int seatsCount,
+	public ResResult getTickets(String ip, String to, String tripId, String when, String transactionId, int seatsCount,
 			String places) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", GET_TICKETS)
 				.queryParam("postid", Config.getOrganisation())
 				.queryParam("to", to)
-				.queryParam("when", dateFormat.format(when))
+				.queryParam("when", when)
 				.queryParam("id", tripId)
 				.queryParam("resid", transactionId)
 				.queryParam(places == null || places.isEmpty() ? "seats" : "places",

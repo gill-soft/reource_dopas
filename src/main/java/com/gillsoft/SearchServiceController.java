@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -29,7 +28,6 @@ import com.gillsoft.concurrent.PoolType;
 import com.gillsoft.concurrent.ThreadPoolStore;
 import com.gillsoft.model.Currency;
 import com.gillsoft.model.Document;
-import com.gillsoft.model.Fare;
 import com.gillsoft.model.Lang;
 import com.gillsoft.model.Locality;
 import com.gillsoft.model.Price;
@@ -42,6 +40,7 @@ import com.gillsoft.model.SeatStatus;
 import com.gillsoft.model.SeatType;
 import com.gillsoft.model.SeatsScheme;
 import com.gillsoft.model.Segment;
+import com.gillsoft.model.Tariff;
 import com.gillsoft.model.Trip;
 import com.gillsoft.model.TripContainer;
 import com.gillsoft.model.Vehicle;
@@ -68,7 +67,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 	}
 
 	@Override
-	public List<Fare> getFaresResponse(String arg0) {
+	public List<Tariff> getTariffsResponse(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -178,7 +177,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 	}
 	
 	private TripSearchResponse putToCache(List<Future<TripPackage>> futures) {
-		String searchId = UUID.randomUUID().toString();
+		String searchId = StringUtil.generateUUID();
 		Map<String, Object> params = new HashMap<>();
 		params.put(MemoryCacheHandler.OBJECT_NAME, searchId);
 		params.put(MemoryCacheHandler.TIME_TO_LIVE, 60000l);
@@ -280,7 +279,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 			segment = new Segment();
 			
 			// автобусы
-			addVehicle(vehicles, segment, trip);
+			addVehicle(vehicles, segment, trip.getTuMark());
 			
 			// станции
 			segment.setDeparture(addStation(localities, trip.getFirstPointCode(), trip.getFistPointName()));
@@ -299,12 +298,19 @@ public class SearchServiceController extends AbstractTripSearchService {
 		segment.setId(trip.getId());
 		segment.setNumber(trip.getNumber());
 		segment.setFreeSeatsCount(trip.getSeats());
+		
+		addDates(segment, trip.getFromDeparture(), trip.getToArrival());
+
+		addPrice(segment, trip.getPrice());
+	}
+	
+	public static void addDates(Segment segment, String departureDate, String arrivalDate) {
 		try {
-			segment.setDepartureDate(RestClient.fullDateFormat.parse(trip.getFromDeparture()));
+			segment.setDepartureDate(RestClient.fullDateFormat.parse(departureDate));
 			
 			// есть только время прибытия, по-этому берем дату с отправления
 			segment.setArrivalDate(RestClient.fullDateFormat.parse(
-					String.join(" ", RestClient.dateFormat.format(segment.getDepartureDate()), trip.getToArrival())));
+					String.join(" ", RestClient.dateFormat.format(segment.getDepartureDate()), arrivalDate)));
 			
 			// если отправление больше прибытия, то добавляем день к прибытию
 			if (segment.getArrivalDate().getTime() < segment.getDepartureDate().getTime()) {
@@ -313,30 +319,29 @@ public class SearchServiceController extends AbstractTripSearchService {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		addPrice(segment, trip.getPrice());
 	}
 	
 	private void addPrice(Segment segment, BigDecimal price) {
 		Price tripPrice = new Price();
-		Fare fare = new Fare();
-		fare.setValue(price);
+		Tariff tariff = new Tariff();
+		tariff.setValue(price);
 		tripPrice.setCurrency(Currency.UAH);
 		tripPrice.setAmount(price);
-		tripPrice.setFare(fare);
+		tripPrice.setTariff(tariff);
 	}
 	
-	private void addVehicle(Map<String, Vehicle> vehicles, Segment segment, TripPackage.Trips.Trip trip) {
-		String vehicleKey = StringUtil.md5(trip.getTuMark());
+	public static void addVehicle(Map<String, Vehicle> vehicles, Segment segment, String model) {
+		String vehicleKey = StringUtil.md5(model);
 		Vehicle vehicle = vehicles.get(vehicleKey);
 		if (vehicle == null) {
 			vehicle = new Vehicle();
-			vehicle.setModel(trip.getTuMark());
+			vehicle.setModel(model);
 			vehicles.put(vehicleKey, vehicle);
 		}
 		segment.setVehicle(new Vehicle(vehicleKey));
 	}
 	
-	private Locality addStation(Map<String, Locality> localities, String id, String name) {
+	public static Locality addStation(Map<String, Locality> localities, String id, String name) {
 		String key = StringUtil.md5(String.join(";", id, name));
 		Locality locality = localities.get(key);
 		if (locality == null) {

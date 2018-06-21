@@ -2,7 +2,6 @@ package com.gillsoft.client;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +11,8 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StreamUtils;
 
+import com.gillsoft.util.StringUtil;
+
 public class RequestResponseLoggingInterceptor implements ClientHttpRequestInterceptor {
 
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -19,7 +20,7 @@ public class RequestResponseLoggingInterceptor implements ClientHttpRequestInter
 	@Override
 	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
 			throws IOException {
-		String id = UUID.randomUUID().toString();
+		String id = StringUtil.generateUUID();
 		logRequest(id, request, body);
 		ClientHttpResponse response = new ClientHttpResponseWrapper(execution.execute(request, body));
 		logResponse(id, response);

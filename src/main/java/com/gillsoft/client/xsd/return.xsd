@@ -44,8 +44,8 @@
 					<xs:complexType>
 						<xs:simpleContent>
 							<xs:extension base="xs:string">
-								<xs:attribute type="xs:date" name="date" />
-								<xs:attribute type="xs:time" name="time" />
+								<xs:attribute type="xs:string" name="date" />
+								<xs:attribute type="xs:string" name="time" />
 							</xs:extension>
 						</xs:simpleContent>
 					</xs:complexType>
