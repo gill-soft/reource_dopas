@@ -22,14 +22,15 @@ import com.gillsoft.cache.CacheHandler;
 import com.gillsoft.cache.IOCacheException;
 import com.gillsoft.cache.MemoryCacheHandler;
 import com.gillsoft.client.Error;
+import com.gillsoft.client.PointIdModel;
 import com.gillsoft.client.RestClient;
 import com.gillsoft.client.Seats;
+import com.gillsoft.client.TripIdModel;
 import com.gillsoft.client.TripPackage;
 import com.gillsoft.concurrent.PoolType;
 import com.gillsoft.concurrent.ThreadPoolStore;
 import com.gillsoft.model.Currency;
 import com.gillsoft.model.Document;
-import com.gillsoft.model.Lang;
 import com.gillsoft.model.Locality;
 import com.gillsoft.model.Price;
 import com.gillsoft.model.Required;
@@ -99,9 +100,10 @@ public class SearchServiceController extends AbstractTripSearchService {
 	
 	@Override
 	public List<Seat> getSeatsResponse(String tripId) {
-		String[] params = tripId.split(";");
 		try {
-			Seats seats = RestClient.getInstance().getSeats(params[0], params[1], params[2], params[3]);
+			TripIdModel model = new TripIdModel().create(tripId);
+			Seats seats = RestClient.getInstance().getSeats(
+					model.getIp(), model.getToId(), model.getTripId(), model.getDate());
 			if (seats != null
 					&& !seats.getSeat().isEmpty()) {
 				List<Seat> resSeats = new ArrayList<>();
@@ -133,7 +135,9 @@ public class SearchServiceController extends AbstractTripSearchService {
 					try {
 						validateSearchParams(pair, date);
 						TripPackage tripPackage = RestClient.getInstance().getTrips(
-								pair[0].split(";")[1], pair[1].split(";")[2], date);
+								new PointIdModel().create(pair[0]).getIp(),
+								new PointIdModel().create(pair[1]).getId(),
+								date);
 						SearchServiceController.addRequest(tripPackage, pair, date);
 						return tripPackage;
 					} catch (Error e) {
@@ -156,10 +160,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 			error.setName("Invalid parameter \"date\"");
 			throw error;
 		}
-		if (pair == null || pair.length < 2
-				|| pair[0] == null || pair[1] == null
-				|| pair[0].split(";").length < 2
-				|| pair[1].split(";").length < 3) {
+		if (pair == null || pair.length < 2) {
 			Error error = new Error();
 			error.setName("Invalid parameter \"pair\"");
 			throw error;
@@ -248,18 +249,19 @@ public class SearchServiceController extends AbstractTripSearchService {
 			List<Trip> trips = new ArrayList<>();
 			for (TripPackage.Trips.Trip trip : tripPackage.getTrips().getTrip()) {
 				
+				// делаем ид, по которому сможем продать
+				PointIdModel from = new PointIdModel().create(tripPackage.getRequest().getLocalityPairs().get(0)[0]);
+				String segmentKey = new TripIdModel(
+						from.getIp(),
+						new PointIdModel().create(tripPackage.getRequest().getLocalityPairs().get(0)[1]).getId(),
+						RestClient.dateFormat.format(tripPackage.getRequest().getDates().get(0)),
+						trip.getId()).asString();
+				
 				// сегменты
 				Trip resTrip = new Trip();
-				resTrip.setId(addSegment(vehicles, localities, segments, trip));
+				resTrip.setId(segmentKey);
+				addSegment(segmentKey, from.getId(), vehicles, localities, segments, trip);
 				trips.add(resTrip);
-			}
-			// делаем ид, по которому сможем продать
-			for (Segment segment : segments.values()) {
-				segment.setId(String.join(";",
-						tripPackage.getRequest().getLocalityPairs().get(0)[0].split(";")[1],
-						tripPackage.getRequest().getLocalityPairs().get(0)[1].split(";")[2],
-						segment.getId(),
-						RestClient.dateFormat.format(tripPackage.getRequest().getDates().get(0))));
 			}
 			container.setTrips(trips);
 		}
@@ -269,12 +271,10 @@ public class SearchServiceController extends AbstractTripSearchService {
 		containers.add(container);
 	}
 	
-	private String addSegment(Map<String, Vehicle> vehicles, Map<String, Locality> localities,
-			Map<String, Segment> segments, TripPackage.Trips.Trip trip) {
+	private void addSegment(String segmentKey, String fromId, Map<String, Vehicle> vehicles,
+			Map<String, Locality> localities, Map<String, Segment> segments, TripPackage.Trips.Trip trip) {
 		
 		// сегменты
-		String segmentKey = StringUtil.md5(String.join(";", trip.getId(), trip.getFirstPointCode(),
-				trip.getLastPointCode(), trip.getFromDeparture(), trip.getToArrival(), trip.getPrice().toString()));
 		Segment segment = segments.get(segmentKey);
 		if (segment == null) {
 			segment = new Segment();
@@ -282,21 +282,21 @@ public class SearchServiceController extends AbstractTripSearchService {
 			// автобусы
 			addVehicle(vehicles, segment, trip.getTuMark());
 			
-			// станции
-			segment.setDeparture(addStation(localities, trip.getFirstPointCode(), trip.getFistPointName()));
-			segment.setArrival(addStation(localities, trip.getLastPointCode(), trip.getLastPointName()));
+			// станции TODO change to request stations and add route
+			segment.setDeparture(addStation(localities, String.join(";", fromId, trip.getFirstPointCode()),
+					trip.getFistPointName()));
+			segment.setArrival(addStation(localities, String.join(";", fromId, trip.getLastPointCode()),
+					trip.getLastPointName()));
 			
 			setSegmentFields(segment, trip);
 			
 			segments.put(segmentKey, segment);
 		}
-		return segmentKey;
 	}
 	
 	private void setSegmentFields(Segment segment, TripPackage.Trips.Trip trip) {
 		
 		// рейс
-		segment.setId(trip.getId());
 		segment.setNumber(trip.getNumber());
 		segment.setFreeSeatsCount(trip.getSeats());
 		
@@ -343,15 +343,21 @@ public class SearchServiceController extends AbstractTripSearchService {
 	}
 	
 	public static Locality addStation(Map<String, Locality> localities, String id, String name) {
-		String key = StringUtil.md5(String.join(";", id, name));
-		Locality locality = localities.get(key);
-		if (locality == null) {
-			locality = new Locality();
-			locality.setId(id);
-			locality.setName(Lang.UA, name);
-			localities.put(key, locality);
+		Locality fromDict = LocalityServiceController.getLocality(id);
+		if (fromDict == null) {
+			return null;
 		}
-		return new Locality(key);
+		String fromDictId = fromDict.getId();
+		try {
+			fromDict = fromDict.clone();
+			fromDict.setId(null);
+		} catch (CloneNotSupportedException e) {
+		}
+		Locality locality = localities.get(fromDictId);
+		if (locality == null) {
+			localities.put(fromDictId, fromDict);
+		}
+		return new Locality(fromDictId);
 	}
 
 }

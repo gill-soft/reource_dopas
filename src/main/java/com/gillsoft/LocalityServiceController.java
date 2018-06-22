@@ -1,10 +1,8 @@
 package com.gillsoft;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -14,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.gillsoft.abstract_rest_service.AbstractLocalityService;
 import com.gillsoft.client.Error;
+import com.gillsoft.client.PointIdModel;
 import com.gillsoft.client.RestClient;
 import com.gillsoft.client.Salepoints;
 import com.gillsoft.client.Salepoints.Salepoint;
@@ -28,7 +27,9 @@ import com.google.common.collect.Lists;
 public class LocalityServiceController extends AbstractLocalityService {
 	
 	private static Set<Locality> all;
-	private static Map<Locality, List<Locality>> binding;
+	private static Map<String, List<String>> binding = new ConcurrentHashMap<>();
+	
+	private static Map<String, Locality> internalAll = new ConcurrentHashMap<>();
 
 	@Override
 	public List<Locality> getAllResponse(LocalityRequest request) {
@@ -39,17 +40,7 @@ public class LocalityServiceController extends AbstractLocalityService {
 	public Map<String, List<String>> getBindingResponse(LocalityRequest request) {
 		createLocalities();
 		if (binding != null) {
-			Map<String, List<String>> result = new HashMap<>();
-			for (Entry<Locality, List<Locality>> entry : binding.entrySet()) {
-				if (entry.getValue() != null) {
-					List<String> ids = new ArrayList<>();
-					for (Locality locality : entry.getValue()) {
-						ids.add(locality.getId());
-					}
-					result.put(entry.getKey().getId(), ids);
-				}
-			}
-			return result;
+			return binding;
 		}
 		return null;
 	}
@@ -75,13 +66,18 @@ public class LocalityServiceController extends AbstractLocalityService {
 							all = new CopyOnWriteArraySet<>();
 							for (Salepoint point : salepoints.getSalepoint()) {
 								Locality dispatch = new Locality();
-								dispatch.setId(String.join(";", point.getId(), point.getIp()));
+								dispatch.setId(new PointIdModel(point.getId(), point.getIp(), null).asString());
 								dispatch.setName(Lang.UA, point.getName());
 								all.add(dispatch);
+								getInternalAll().put(point.getId(), dispatch);
 								List<Locality> arrivals = getLocalities(point);
 								if (arrivals != null) {
-									all.addAll(arrivals);
-									getBindingMap().put(dispatch, arrivals);
+									List<String> arrivalIds = new CopyOnWriteArrayList<>();
+									for (Locality arrival : arrivals) {
+										arrivalIds.add(arrival.getId());
+										all.add(arrival);
+									}
+									getBindingMap().put(dispatch.getId(), arrivalIds);
 								}
 							}
 						}
@@ -93,11 +89,12 @@ public class LocalityServiceController extends AbstractLocalityService {
 		}
 	}
 	
-	private Map<Locality, List<Locality>> getBindingMap() {
-		if (binding == null) {
-			binding = new ConcurrentHashMap<>();
-		}
+	private Map<String, List<String>> getBindingMap() {
 		return binding;
+	}
+	
+	private static Map<String, Locality> getInternalAll() {
+		return internalAll;
 	}
 	
 	private List<Locality> getLocalities(Salepoint salepoint) {
@@ -105,12 +102,13 @@ public class LocalityServiceController extends AbstractLocalityService {
 			Stations stations = RestClient.getInstance().getStations(salepoint.getIp());
 			if (stations != null
 					&& stations.getStation() != null) {
-				List<Locality> localities = new CopyOnWriteArrayList<>();
+				List<Locality> localities = new ArrayList<>();
 				for (Station station : stations.getStation()) {
 					Locality arrival = new Locality();
-					arrival.setId(String.join(";", salepoint.getId(), salepoint.getIp(), station.getId()));
+					arrival.setId(new PointIdModel(salepoint.getId(), salepoint.getIp(), station.getId()).asString());
 					arrival.setName(Lang.UA, station.getName());
 					localities.add(arrival);
+					internalAll.put(String.join(";", salepoint.getId(), station.getId()), arrival);
 				}
 				return localities;
 			}
@@ -118,6 +116,10 @@ public class LocalityServiceController extends AbstractLocalityService {
 			// TODO: handle exception
 		}
 		return null;
+	}
+	
+	public static Locality getLocality(String id) {
+		return getInternalAll().get(id);
 	}
 
 }

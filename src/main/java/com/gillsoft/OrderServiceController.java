@@ -16,6 +16,7 @@ import com.gillsoft.client.Error;
 import com.gillsoft.client.ResResult;
 import com.gillsoft.client.ResResult.Tickets;
 import com.gillsoft.client.RestClient;
+import com.gillsoft.client.TripIdModel;
 import com.gillsoft.model.CalcType;
 import com.gillsoft.model.Commission;
 import com.gillsoft.model.Currency;
@@ -73,9 +74,11 @@ public class OrderServiceController extends AbstractOrderService {
 		for (Entry<String, List<ServiceItem>> order : getTripItems(request).entrySet()) {
 			String[] params = order.getKey().split(";");
 			String transactionId = StringUtil.generateUUID();
+			TripIdModel model = new TripIdModel().create(params[0]);
 			try {
 				// получаем данные по билету в ресурсе
-				ResResult result = RestClient.getInstance().getTickets(params[0], params[1], params[2], params[3],
+				ResResult result = RestClient.getInstance().getTickets(
+						model.getIp(), model.getToId(), model.getTripId(), model.getDate(),
 						transactionId, order.getValue().size(), getSeats(order.getValue()));
 				if (result.getState() == 0) {
 					Error error = new Error();
@@ -85,7 +88,7 @@ public class OrderServiceController extends AbstractOrderService {
 				// формируем билеты
 				for (Tickets.Ticket ticket : result.getTickets().getTicket()) {
 					ServiceItem item = new ServiceItem();
-					item.setId(String.join(";", params[0], transactionId, ticket.getNo()));
+					item.setId(String.join(";", params[0], transactionId, ticket.getNo())); //TODO
 					item.setNumber(ticket.getNo());
 					
 					// пассажир
@@ -93,8 +96,7 @@ public class OrderServiceController extends AbstractOrderService {
 							getTicketCustomer(items, ticket.getPlace().getNumber())));
 					
 					// рейс
-					item.setSegment(addSegment(String.join(";", params[0], params[1], params[2], params[3]),
-							organisations, localities, segments, ticket));
+					item.setSegment(addSegment(params[0], organisations, localities, segments, ticket));
 					
 					// место
 					item.setSeat(createSeat(ticket));
@@ -116,6 +118,8 @@ public class OrderServiceController extends AbstractOrderService {
 		response.setOrganisations(organisations);
 		response.setSegments(segments);
 		response.setServices(resultItems);
+		
+		//TODO response orderid
 		return response;
 	}
 	
@@ -190,11 +194,9 @@ public class OrderServiceController extends AbstractOrderService {
 	
 	private Segment addSegment(String id, Map<String, Organisation> organisations, Map<String, Locality> localities,
 			Map<String, Segment> segments, Tickets.Ticket ticket) {
-		String key = StringUtil.md5(id);
 		Segment segment = segments.get(id);
 		if (segment == null) {
 			segment = new Segment();
-			segment.setId(id);
 			
 			setSegmentFields(segment, ticket);
 			
@@ -209,10 +211,10 @@ public class OrderServiceController extends AbstractOrderService {
 			segment.setInsurance(addOrganisation(organisations,
 					ticket.getInsurance().getBrand(), ticket.getInsurance().getAddress(), ticket.getInsurance().getPhone()));
 			
-			segments.put(key, segment);
+			segments.put(id, segment);
 		}
 		Segment result = new Segment();
-		result.setId(key);
+		result.setId(id);
 		return result;
 	}
 	
