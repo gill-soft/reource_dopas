@@ -1,25 +1,25 @@
 package com.gillsoft.client;
 
-public class OrderIdModel extends AbstractModel {
+import java.util.ArrayList;
+import java.util.List;
+
+import com.gillsoft.model.AbstractJsonModel;
+
+public class OrderIdModel extends AbstractJsonModel {
 	
-	private String ip;
+	private List<ServiceIdModel> services = new ArrayList<>();
+
+	public List<ServiceIdModel> getServices() {
+		return services;
+	}
+
+	public void setServices(List<ServiceIdModel> services) {
+		this.services = services;
+	}
 	
-	private String transactionId;
-
-	public String getIp() {
-		return ip;
-	}
-
-	public void setIp(String ip) {
-		this.ip = ip;
-	}
-
-	public String getTransactionId() {
-		return transactionId;
-	}
-
-	public void setTransactionId(String transactionId) {
-		this.transactionId = transactionId;
+	@Override
+	public OrderIdModel create(String json) {
+		return (OrderIdModel) super.create(json);
 	}
 	
 }

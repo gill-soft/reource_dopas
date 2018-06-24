@@ -1,6 +1,8 @@
 package com.gillsoft.client;
 
-public class PointIdModel extends AbstractModel {
+import com.gillsoft.model.AbstractJsonModel;
+
+public class PointIdModel extends AbstractJsonModel {
 	
 	private String id;
 	

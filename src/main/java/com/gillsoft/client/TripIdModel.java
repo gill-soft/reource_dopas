@@ -1,6 +1,8 @@
 package com.gillsoft.client;
 
-public class TripIdModel extends AbstractModel {
+import com.gillsoft.model.AbstractJsonModel;
+
+public class TripIdModel extends AbstractJsonModel {
 
 	private String ip;
 

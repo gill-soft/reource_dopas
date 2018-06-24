@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.gillsoft.abstract_rest_service.AbstractOrderService;
 import com.gillsoft.client.Error;
+import com.gillsoft.client.OrderIdModel;
 import com.gillsoft.client.ResResult;
 import com.gillsoft.client.ResResult.Tickets;
 import com.gillsoft.client.RestClient;
+import com.gillsoft.client.ServiceIdModel;
 import com.gillsoft.client.TripIdModel;
 import com.gillsoft.model.CalcType;
 import com.gillsoft.model.Commission;
@@ -71,6 +73,9 @@ public class OrderServiceController extends AbstractOrderService {
 		Map<String, Segment> segments = new HashMap<>();
 		List<ServiceItem> resultItems = new ArrayList<>();
 		
+		// список билетов
+		OrderIdModel orderId = new OrderIdModel();
+		
 		for (Entry<String, List<ServiceItem>> order : getTripItems(request).entrySet()) {
 			String[] params = order.getKey().split(";");
 			String transactionId = StringUtil.generateUUID();
@@ -85,10 +90,13 @@ public class OrderServiceController extends AbstractOrderService {
 					error.setName(result.getReason());
 					throw error;
 				}
+				// добавляем ид заказа
+				orderId.getServices().add(new ServiceIdModel(model.getIp(), transactionId, null));
+				
 				// формируем билеты
 				for (Tickets.Ticket ticket : result.getTickets().getTicket()) {
 					ServiceItem item = new ServiceItem();
-					item.setId(String.join(";", params[0], transactionId, ticket.getNo())); //TODO
+					item.setId(new ServiceIdModel(model.getIp(), transactionId, ticket.getNo()).asString());
 					item.setNumber(ticket.getNo());
 					
 					// пассажир
@@ -113,13 +121,12 @@ public class OrderServiceController extends AbstractOrderService {
 				}
 			}
 		}
+		response.setOrderId(orderId.asString());
 		response.setCustomers(request.getCustomers());
 		response.setLocalities(localities);
 		response.setOrganisations(organisations);
 		response.setSegments(segments);
 		response.setServices(resultItems);
-		
-		//TODO response orderid
 		return response;
 	}
 	
@@ -201,8 +208,8 @@ public class OrderServiceController extends AbstractOrderService {
 			setSegmentFields(segment, ticket);
 			
 			// станции
-			segment.setDeparture(SearchServiceController.addStation(localities, null, ticket.getFrom().getText()));
-			segment.setArrival(SearchServiceController.addStation(localities, null, ticket.getTo().getText()));
+//			segment.setDeparture(SearchServiceController.addStation(localities, null, ticket.getFrom().getText()));
+//			segment.setArrival(SearchServiceController.addStation(localities, null, ticket.getTo().getText()));
 			
 			// перевозчик
 			segment.setCarrier(addOrganisation(organisations,
