@@ -104,7 +104,7 @@ public class OrderServiceController extends AbstractOrderService {
 							getTicketCustomer(items, ticket.getPlace().getNumber())));
 					
 					// рейс
-					item.setSegment(addSegment(params[0], organisations, localities, segments, ticket));
+					item.setSegment(addSegment(model, organisations, localities, segments, ticket));
 					
 					// место
 					item.setSeat(createSeat(ticket));
@@ -199,17 +199,19 @@ public class OrderServiceController extends AbstractOrderService {
 		return priceTariff;
 	}
 	
-	private Segment addSegment(String id, Map<String, Organisation> organisations, Map<String, Locality> localities,
-			Map<String, Segment> segments, Tickets.Ticket ticket) {
-		Segment segment = segments.get(id);
+	private Segment addSegment(TripIdModel model, Map<String, Organisation> organisations,
+			Map<String, Locality> localities, Map<String, Segment> segments, Tickets.Ticket ticket) {
+		String segmentId = model.asString();
+		Segment segment = segments.get(segmentId);
 		if (segment == null) {
 			segment = new Segment();
 			
 			setSegmentFields(segment, ticket);
 			
 			// станции
-//			segment.setDeparture(SearchServiceController.addStation(localities, null, ticket.getFrom().getText()));
-//			segment.setArrival(SearchServiceController.addStation(localities, null, ticket.getTo().getText()));
+			segment.setDeparture(SearchServiceController.addStation(localities, model.getFromId()));
+			segment.setArrival(SearchServiceController.addStation(localities,
+					String.join(";", model.getFromId(), model.getToId())));
 			
 			// перевозчик
 			segment.setCarrier(addOrganisation(organisations,
@@ -218,10 +220,10 @@ public class OrderServiceController extends AbstractOrderService {
 			segment.setInsurance(addOrganisation(organisations,
 					ticket.getInsurance().getBrand(), ticket.getInsurance().getAddress(), ticket.getInsurance().getPhone()));
 			
-			segments.put(id, segment);
+			segments.put(segmentId, segment);
 		}
 		Segment result = new Segment();
-		result.setId(id);
+		result.setId(segmentId);
 		return result;
 	}
 	

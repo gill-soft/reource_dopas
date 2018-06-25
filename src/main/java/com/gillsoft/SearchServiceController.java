@@ -251,16 +251,18 @@ public class SearchServiceController extends AbstractTripSearchService {
 				
 				// делаем ид, по которому сможем продать
 				PointIdModel from = new PointIdModel().create(tripPackage.getRequest().getLocalityPairs().get(0)[0]);
+				PointIdModel to = new PointIdModel().create(tripPackage.getRequest().getLocalityPairs().get(0)[1]);
 				String segmentKey = new TripIdModel(
 						from.getIp(),
-						new PointIdModel().create(tripPackage.getRequest().getLocalityPairs().get(0)[1]).getId(),
+						from.getId(),
+						to.getId(),
 						RestClient.dateFormat.format(tripPackage.getRequest().getDates().get(0)),
 						trip.getId()).asString();
 				
 				// сегменты
 				Trip resTrip = new Trip();
 				resTrip.setId(segmentKey);
-				addSegment(segmentKey, from.getId(), vehicles, localities, segments, trip);
+				addSegment(segmentKey, from.getId(), to.getId(), vehicles, localities, segments, trip);
 				trips.add(resTrip);
 			}
 			container.setTrips(trips);
@@ -271,7 +273,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 		containers.add(container);
 	}
 	
-	private void addSegment(String segmentKey, String fromId, Map<String, Vehicle> vehicles,
+	private void addSegment(String segmentKey, String fromId, String toId, Map<String, Vehicle> vehicles,
 			Map<String, Locality> localities, Map<String, Segment> segments, TripPackage.Trips.Trip trip) {
 		
 		// сегменты
@@ -282,11 +284,9 @@ public class SearchServiceController extends AbstractTripSearchService {
 			// автобусы
 			addVehicle(vehicles, segment, trip.getTuMark());
 			
-			// станции TODO change to request stations and add route
-			segment.setDeparture(addStation(localities, String.join(";", fromId, trip.getFirstPointCode()),
-					trip.getFistPointName()));
-			segment.setArrival(addStation(localities, String.join(";", fromId, trip.getLastPointCode()),
-					trip.getLastPointName()));
+			// станции TODO add route
+			segment.setDeparture(addStation(localities, fromId));
+			segment.setArrival(addStation(localities, String.join(";", fromId, toId)));
 			
 			setSegmentFields(segment, trip);
 			
@@ -342,7 +342,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 		segment.setVehicle(new Vehicle(vehicleKey));
 	}
 	
-	public static Locality addStation(Map<String, Locality> localities, String id, String name) {
+	public static Locality addStation(Map<String, Locality> localities, String id) {
 		Locality fromDict = LocalityServiceController.getLocality(id);
 		if (fromDict == null) {
 			return null;

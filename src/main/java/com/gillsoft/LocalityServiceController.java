@@ -118,6 +118,14 @@ public class LocalityServiceController extends AbstractLocalityService {
 		return null;
 	}
 	
+	/**
+	 * Возвращает населенный пункт по его ид
+	 * 
+	 * @param id
+	 *            Для пунктов отправления ид пункта отправления, для пунктов
+	 *            прибытия ид отправления + ";" + ид прибытия
+	 * @return Населенный пункт
+	 */
 	public static Locality getLocality(String id) {
 		return getInternalAll().get(id);
 	}
