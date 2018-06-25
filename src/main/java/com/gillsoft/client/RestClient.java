@@ -28,7 +28,7 @@ public class RestClient {
 	private static final String GET_SEATS = "PBGetSeatsList";
 	private static final String GET_TICKETS = "PBGetTickets";
 	private static final String CONFIRM_PAY = "PBPayConfirm";
-	private static final String RETURN = "PBReturnQuery";
+	private static final String RETURN_INFO = "PBTicketInfo";
 	private static final String CONFIRM_RETURN = "PBReturnConfirm";
 	
 	public static final String DEFAULT_CHARSET = "Cp1251";
@@ -174,7 +174,7 @@ public class RestClient {
 	
 	public Information getReturnInfo(String ip, String ticketId) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
-				.queryParam("Action", RETURN)
+				.queryParam("Action", RETURN_INFO)
 				.queryParam("postid", Config.getOrganisation())
 				.queryParam("ticket", ticketId)
 				.build().toUri();

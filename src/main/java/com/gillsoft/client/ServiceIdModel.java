@@ -1,5 +1,7 @@
 package com.gillsoft.client;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.gillsoft.model.AbstractJsonModel;
@@ -12,6 +14,8 @@ public class ServiceIdModel extends AbstractJsonModel {
 	private String transactionId;
 	
 	private String ticketNumber;
+	
+	private List<String> ticketNumbers;
 
 	public ServiceIdModel() {
 		
@@ -47,6 +51,14 @@ public class ServiceIdModel extends AbstractJsonModel {
 		this.ticketNumber = ticketNumber;
 	}
 	
+	public List<String> getTicketNumbers() {
+		return ticketNumbers;
+	}
+
+	public void setTicketNumbers(List<String> ticketNumbers) {
+		this.ticketNumbers = ticketNumbers;
+	}
+
 	@Override
 	public ServiceIdModel create(String json) {
 		return (ServiceIdModel) super.create(json);

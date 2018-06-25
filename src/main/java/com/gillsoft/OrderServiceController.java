@@ -12,6 +12,7 @@ import java.util.Objects;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gillsoft.abstract_rest_service.AbstractOrderService;
+import com.gillsoft.client.Accepted;
 import com.gillsoft.client.Error;
 import com.gillsoft.client.OrderIdModel;
 import com.gillsoft.client.ResResult;
@@ -40,19 +41,19 @@ import com.gillsoft.util.StringUtil;
 public class OrderServiceController extends AbstractOrderService {
 
 	@Override
-	public OrderResponse addTicketsResponse(OrderRequest request) {
+	public OrderResponse addServicesResponse(OrderRequest request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse bookResponse(String id) {
+	public OrderResponse bookingResponse(String orderId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse cancelResponse(String id) {
+	public OrderResponse cancelResponse(String orderId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -91,10 +92,13 @@ public class OrderServiceController extends AbstractOrderService {
 					throw error;
 				}
 				// добавляем ид заказа
-				orderId.getServices().add(new ServiceIdModel(model.getIp(), transactionId, null));
+				ServiceIdModel orderIdmodel = new ServiceIdModel(model.getIp(), transactionId, null);
+				orderIdmodel.setTicketNumbers(new ArrayList<>(result.getTickets().getTicket().size()));
 				
 				// формируем билеты
 				for (Tickets.Ticket ticket : result.getTickets().getTicket()) {
+					orderIdmodel.getTicketNumbers().add(ticket.getNo());
+					
 					ServiceItem item = new ServiceItem();
 					item.setId(new ServiceIdModel(model.getIp(), transactionId, ticket.getNo()).asString());
 					item.setNumber(ticket.getNo());
@@ -114,6 +118,7 @@ public class OrderServiceController extends AbstractOrderService {
 					
 					resultItems.add(item);
 				}
+				orderId.getServices().add(orderIdmodel);
 			} catch (Error e) {
 				for (ServiceItem item : order.getValue()) {
 					item.setError(new RestError(e.getMessage()));
@@ -297,43 +302,84 @@ public class OrderServiceController extends AbstractOrderService {
 	}
 
 	@Override
-	public OrderResponse getPdfTicketsResponse(OrderRequest request) {
+	public OrderResponse getPdfDocumentsResponse(OrderRequest request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse getResponse(String id) {
+	public OrderResponse getResponse(String orderId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse getTicketResponse(String ticketId) {
+	public OrderResponse getServiceResponse(String serviceId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse payResponse(String id) {
+	public OrderResponse confirmResponse(String orderId) {
+		
+		// формируем ответ
+		OrderResponse response = new OrderResponse();
+		List<ServiceItem> resultItems = new ArrayList<>();
+		
+		// преобразовываем ид заказа в объкт
+		OrderIdModel orderIdModel = new OrderIdModel().create(orderId);
+		
+		// выкупаем заказы и формируем ответ
+		for (ServiceIdModel service : orderIdModel.getServices()) {
+			try {
+				Accepted accepted = RestClient.getInstance().confirmTickets(
+						service.getIp(), service.getTransactionId(), RestClient.SUCCESS_STATUS);
+				if (!Objects.equals(accepted.getPaystatus(), RestClient.CONFIRMED)) {
+					Error error = new Error();
+					error.setName("Pay confirm status: ".concat(accepted.getPaystatus()));
+					throw error;
+				} else {
+					addServiceItems(resultItems, service, true, null);
+				}
+			} catch (Exception e) {
+				addServiceItems(resultItems, service, false, new RestError(e.getMessage()));
+			}
+		}
+		response.setOrderId(orderId);
+		response.setServices(resultItems);
+		return response;
+	}
+	
+	private void addServiceItems(List<ServiceItem> resultItems, ServiceIdModel service, boolean confirmed, RestError error) {
+		for (String ticketNumber : service.getTicketNumbers()) {
+			ServiceItem serviceItem = new ServiceItem();
+			serviceItem.setId(new ServiceIdModel(service.getIp(), service.getTransactionId(), ticketNumber).asString());
+			serviceItem.setConfirmed(confirmed);
+			serviceItem.setError(error);
+			resultItems.add(serviceItem);
+		}
+	}
+
+	@Override
+	public OrderResponse removeServicesResponse(OrderRequest request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse removeTicketsResponse(OrderRequest request) {
+	public OrderResponse returnServicesResponse(OrderRequest request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse returnTicketsResponse(OrderRequest request) {
+	public OrderResponse updateCustomersResponse(OrderRequest request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public OrderResponse updatePassengersResponse(OrderRequest request) {
+	public OrderResponse prepareReturnServicesResponse(OrderRequest request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
