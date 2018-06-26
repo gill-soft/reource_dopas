@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -28,7 +29,7 @@ public class RestClient {
 	private static final String GET_SEATS = "PBGetSeatsList";
 	private static final String GET_TICKETS = "PBGetTickets";
 	private static final String CONFIRM_PAY = "PBPayConfirm";
-	private static final String RETURN_INFO = "PBTicketInfo";
+	private static final String RETURN_INFO = "PBReturnQuery";
 	private static final String CONFIRM_RETURN = "PBReturnConfirm";
 	
 	public static final String DEFAULT_CHARSET = "Cp1251";
@@ -46,6 +47,8 @@ public class RestClient {
     public final static int TARIFF_2_CODE = 67;
     public final static int REMOTE_CODE = 55;
     public final static int ADVANCE_CODE = 68;
+    public final static String TARIFF_1_NAME = "Тариф 1";
+    public final static String TARIFF_2_NAME = "Тариф 2";
     
     public final static String SIGNATURE_METHOD = "SHA1";
     public final static String SUCCESS_STATUS = "success";
@@ -172,7 +175,7 @@ public class RestClient {
 		return sendRequest(uri).getAccepted();
 	}
 	
-	public Information getReturnInfo(String ip, String ticketId) throws Error {
+	public TicketType getReturnInfo(String ip, String ticketId) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", RETURN_INFO)
 				.queryParam("postid", Config.getOrganisation())
@@ -181,7 +184,7 @@ public class RestClient {
 		return sendRequest(uri).getInformation();
 	}
 	
-	public Confirmed getConfirmReturn(String ip, String ticketId, BigDecimal percent) throws Error {
+	public Confirmed confirmReturn(String ip, String ticketId, BigDecimal percent) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", CONFIRM_RETURN)
 				.queryParam("postid", Config.getOrganisation())
@@ -213,5 +216,9 @@ public class RestClient {
         md.update(signature.getBytes());
         return new BASE64Encoder().encode(md.digest());
     }
+	
+	public static RestClientException createUnavailableMethod() {
+		return new RestClientException("Method is unavailable");
+	}
 	
 }

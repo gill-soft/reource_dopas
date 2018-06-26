@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.gillsoft.abstract_rest_service.AbstractOrderService;
 import com.gillsoft.client.Accepted;
+import com.gillsoft.client.Confirmed;
 import com.gillsoft.client.Error;
 import com.gillsoft.client.OrderIdModel;
 import com.gillsoft.client.ResResult;
-import com.gillsoft.client.ResResult.Tickets;
 import com.gillsoft.client.RestClient;
 import com.gillsoft.client.ServiceIdModel;
+import com.gillsoft.client.TicketType;
 import com.gillsoft.client.TripIdModel;
 import com.gillsoft.model.CalcType;
 import com.gillsoft.model.Commission;
@@ -28,6 +29,7 @@ import com.gillsoft.model.Locality;
 import com.gillsoft.model.Organisation;
 import com.gillsoft.model.Price;
 import com.gillsoft.model.RestError;
+import com.gillsoft.model.ReturnCondition;
 import com.gillsoft.model.Seat;
 import com.gillsoft.model.Segment;
 import com.gillsoft.model.ServiceItem;
@@ -42,20 +44,17 @@ public class OrderServiceController extends AbstractOrderService {
 
 	@Override
 	public OrderResponse addServicesResponse(OrderRequest request) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public OrderResponse bookingResponse(String orderId) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public OrderResponse cancelResponse(String orderId) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
@@ -96,7 +95,7 @@ public class OrderServiceController extends AbstractOrderService {
 				orderIdmodel.setTicketNumbers(new ArrayList<>(result.getTickets().getTicket().size()));
 				
 				// формируем билеты
-				for (Tickets.Ticket ticket : result.getTickets().getTicket()) {
+				for (TicketType ticket : result.getTickets().getTicket()) {
 					orderIdmodel.getTicketNumbers().add(ticket.getNo());
 					
 					ServiceItem item = new ServiceItem();
@@ -145,14 +144,14 @@ public class OrderServiceController extends AbstractOrderService {
 		return sb.toString().replaceFirst(",$", "");
 	}
 	
-	private Seat createSeat(Tickets.Ticket ticket) {
+	private Seat createSeat(TicketType ticket) {
 		Seat seat = new Seat();
 		seat.setId(ticket.getPlace().getNumber());
 		seat.setNumber(ticket.getPlace().getNumber());
 		return seat;
 	}
 	
-	private Price createPrice(Tickets.Ticket ticket) {
+	private Price createPrice(TicketType ticket) {
 		Price price = new Price();
 		price.setCurrency(Currency.UAH);
 		price.setAmount(ticket.getPrice().getCash());
@@ -167,11 +166,10 @@ public class OrderServiceController extends AbstractOrderService {
 		return price;
 	}
 	
-	private List<Commission> createCommissions(List<Tickets.Ticket.Tariffs.Tariff> tariffs) {
+	private List<Commission> createCommissions(List<TicketType.Tariffs.Tariff> tariffs) {
 		List<Commission> commissions = new ArrayList<>();
-		for (Tickets.Ticket.Tariffs.Tariff tariff : tariffs) {
-			if (tariff.getCode() != RestClient.TARIFF_1_CODE
-					&& tariff.getCode() != RestClient.TARIFF_2_CODE) {
+		for (TicketType.Tariffs.Tariff tariff : tariffs) {
+			if (!checkTariff(tariff)) {
 				Commission commission = new Commission();
 				commission.setCode(String.valueOf(tariff.getCode()));
 				commission.setName(tariff.getText());
@@ -184,14 +182,13 @@ public class OrderServiceController extends AbstractOrderService {
 		return commissions;
 	}
 	
-	private Tariff createTariff(List<Tickets.Ticket.Tariffs.Tariff> tariffs) {
+	private Tariff createTariff(List<TicketType.Tariffs.Tariff> tariffs) {
 		Tariff priceTariff = new Tariff();
 		priceTariff.setValue(BigDecimal.ZERO);
 		priceTariff.setCode("");
 		priceTariff.setName("");
-		for (Tickets.Ticket.Tariffs.Tariff tariff : tariffs) {
-			if (tariff.getCode() == RestClient.TARIFF_1_CODE
-					|| tariff.getCode() == RestClient.TARIFF_2_CODE) {
+		for (TicketType.Tariffs.Tariff tariff : tariffs) {
+			if (checkTariff(tariff)) {
 				priceTariff.setValue(priceTariff.getValue().add(tariff.getCash()));
 				priceTariff.setCode(priceTariff.getCode().concat(",").concat(
 						String.valueOf(tariff.getCode())));
@@ -200,12 +197,23 @@ public class OrderServiceController extends AbstractOrderService {
 			}
 		}
 		priceTariff.setName(priceTariff.getName().replaceFirst("^,", ""));
-		priceTariff.setCode(priceTariff.getCode().replaceFirst("^,", ""));
+		if (priceTariff.getCode() != null) {
+			priceTariff.setCode(priceTariff.getCode().replaceFirst("^,", ""));
+		}
 		return priceTariff;
 	}
 	
+	private boolean checkTariff(TicketType.Tariffs.Tariff tariff) {
+		return (tariff.getCode() == null
+				&& (Objects.equals(tariff.getText(), RestClient.TARIFF_1_NAME)
+						|| Objects.equals(tariff.getText(), RestClient.TARIFF_2_NAME)))
+				|| (tariff.getCode() != null
+						&& (tariff.getCode() == RestClient.TARIFF_1_CODE
+								|| tariff.getCode() == RestClient.TARIFF_2_CODE));
+	}
+	
 	private Segment addSegment(TripIdModel model, Map<String, Organisation> organisations,
-			Map<String, Locality> localities, Map<String, Segment> segments, Tickets.Ticket ticket) {
+			Map<String, Locality> localities, Map<String, Segment> segments, TicketType ticket) {
 		String segmentId = model.asString();
 		Segment segment = segments.get(segmentId);
 		if (segment == null) {
@@ -246,7 +254,7 @@ public class OrderServiceController extends AbstractOrderService {
 		return new Organisation(key);
 	}
 	
-	private void setSegmentFields(Segment segment, Tickets.Ticket ticket) {
+	private void setSegmentFields(Segment segment, TicketType ticket) {
 		
 		// рейс
 		segment.setNumber(ticket.getRace().getCode());
@@ -303,20 +311,17 @@ public class OrderServiceController extends AbstractOrderService {
 
 	@Override
 	public OrderResponse getPdfDocumentsResponse(OrderRequest request) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public OrderResponse getResponse(String orderId) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public OrderResponse getServiceResponse(String serviceId) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
@@ -362,26 +367,64 @@ public class OrderServiceController extends AbstractOrderService {
 
 	@Override
 	public OrderResponse removeServicesResponse(OrderRequest request) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public OrderResponse returnServicesResponse(OrderRequest request) {
-		// TODO Auto-generated method stub
-		return null;
+		OrderResponse response = new OrderResponse();
+		response.setServices(new ArrayList<>(request.getServices().size()));
+		for (ServiceItem serviceItem : request.getServices()) {
+			ServiceIdModel model = new ServiceIdModel().create(serviceItem.getId());
+			try {
+				Confirmed confirmed = RestClient.getInstance().confirmReturn(
+						model.getIp(), model.getTicketNumber(), BigDecimal.ONE);
+				serviceItem.setConfirmed(confirmed != null);
+			} catch (Error e) {
+				serviceItem.setError(new RestError(e.getMessage()));
+			}
+			response.getServices().add(serviceItem);
+		}
+		return response;
 	}
 
 	@Override
 	public OrderResponse updateCustomersResponse(OrderRequest request) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public OrderResponse prepareReturnServicesResponse(OrderRequest request) {
-		// TODO Auto-generated method stub
-		return null;
+		OrderResponse response = new OrderResponse();
+		response.setServices(new ArrayList<>(request.getServices().size()));
+		for (ServiceItem serviceItem : request.getServices()) {
+			ServiceIdModel model = new ServiceIdModel().create(serviceItem.getId());
+			try {
+				TicketType info = RestClient.getInstance().getReturnInfo(model.getIp(), model.getTicketNumber());
+				Price price = new Price();
+				price.setCurrency(Currency.UAH);
+				price.setAmount(info.getMoney().getCash());
+				
+				// считаем тариф
+				Tariff tariff = createTariff(info.getTariffs().getTariff());
+				price.setTariff(tariff);
+				
+				ReturnCondition condition = new ReturnCondition();
+				condition.setDescription(info.getRefund().getInfo());
+				
+				tariff.setReturnConditions(new ArrayList<>(1));
+				tariff.getReturnConditions().add(condition);
+				
+				// добавляем комиссии
+				price.setCommissions(createCommissions(info.getTariffs().getTariff()));
+				
+				serviceItem.setPrice(price);
+			} catch (Error e) {
+				serviceItem.setError(new RestError(e.getMessage()));
+			}
+			response.getServices().add(serviceItem);
+		}
+		return response;
 	}
 
 }

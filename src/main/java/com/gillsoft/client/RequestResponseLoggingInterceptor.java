@@ -34,7 +34,7 @@ public class RequestResponseLoggingInterceptor implements ClientHttpRequestInter
 				.append("URI          : ").append(request.getURI()).append("\n")
 				.append("Method       : ").append(request.getMethod()).append("\n")
 				.append("Headers      : ").append(request.getHeaders()).append("\n")
-				.append("Request body : ").append(new String(body, Charset.defaultCharset())).append("\n")
+				.append("Request body : ").append(new String(body, Charset.forName("windows-1251"))).append("\n")
 				.append("==============request end================").toString());
 	}
 
@@ -45,7 +45,8 @@ public class RequestResponseLoggingInterceptor implements ClientHttpRequestInter
 				.append("Status code  : ").append(response.getStatusCode()).append("\n")
 				.append("Status text  : ").append(response.getStatusText()).append("\n")
 				.append("Headers      : ").append(response.getHeaders()).append("\n")
-				.append("Response body: ").append(StreamUtils.copyToString(response.getBody(), Charset.defaultCharset())).append("\n")
+				.append("Response body: ").append(
+						StreamUtils.copyToString(response.getBody(), Charset.forName("windows-1251"))).append("\n")
 				.append("==============response end===============").toString());
 	}
 

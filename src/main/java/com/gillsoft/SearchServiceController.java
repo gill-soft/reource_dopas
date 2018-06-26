@@ -16,6 +16,7 @@ import java.util.concurrent.Future;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientException;
 
 import com.gillsoft.abstract_rest_service.AbstractTripSearchService;
 import com.gillsoft.cache.CacheHandler;
@@ -58,44 +59,37 @@ public class SearchServiceController extends AbstractTripSearchService {
 
 	@Override
 	public List<ReturnCondition> getConditionsResponse(String arg0, String arg1) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public List<Document> getDocumentsResponse(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public List<Tariff> getTariffsResponse(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public Required getRequiredFieldsResponse(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public Route getRouteResponse(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 
 	@Override
 	public SeatsScheme getSeatsSchemeResponse(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 	
 	@Override
 	public List<Seat> updateSeatsResponse(String arg0, List<Seat> arg1) {
-		// TODO Auto-generated method stub
-		return null;
+		throw RestClient.createUnavailableMethod();
 	}
 	
 	@Override
@@ -118,8 +112,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 				return resSeats;
 			}
 		} catch (Error e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RestClientException(e.getMessage());
 		}
 		return null;
 	}
@@ -284,7 +277,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 			// автобусы
 			addVehicle(vehicles, segment, trip.getTuMark());
 			
-			// станции TODO add route
+			// станции
 			segment.setDeparture(addStation(localities, fromId));
 			segment.setArrival(addStation(localities, String.join(";", fromId, toId)));
 			

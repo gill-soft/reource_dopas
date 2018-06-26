@@ -12,7 +12,7 @@ public class Response {
 	private Accepted accepted;
 	private Confirmed confirmed;
 	private Error error;
-	private Information information;
+	private TicketType information;
 	
 	@XmlElement(name = "res_result")
 	private ResResult resResult;
@@ -36,7 +36,7 @@ public class Response {
 		return error;
 	}
 
-	public Information getInformation() {
+	public TicketType getInformation() {
 		return information;
 	}
 
