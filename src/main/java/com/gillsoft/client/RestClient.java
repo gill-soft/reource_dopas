@@ -1,7 +1,9 @@
 package com.gillsoft.client;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
@@ -10,11 +12,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.gillsoft.logging.RequestResponseLoggingInterceptor;
 import com.gillsoft.util.RestTemplateUtil;
 
 import sun.misc.BASE64Encoder;
@@ -93,7 +99,16 @@ public class RestClient {
 		RestTemplate template = new RestTemplate(new BufferingClientHttpRequestFactory(
 				RestTemplateUtil.createPoolingFactory(Config.getUrl(), 300, Config.getRequestTimeout())));
 		template.setMessageConverters(RestTemplateUtil.getMarshallingMessageConverters(Response.class));
-		template.setInterceptors(Collections.singletonList(new RequestResponseLoggingInterceptor()));
+		template.setInterceptors(Collections.singletonList(
+				new RequestResponseLoggingInterceptor(Charset.forName("windows-1251")) {
+
+					@Override
+					public ClientHttpResponse execute(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
+							throws IOException {
+						return new ClientHttpResponseWrapper(execution.execute(request, body));
+					}
+
+				}));
 		return template;
 	}
 	
