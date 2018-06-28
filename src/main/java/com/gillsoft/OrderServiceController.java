@@ -25,6 +25,7 @@ import com.gillsoft.model.CalcType;
 import com.gillsoft.model.Commission;
 import com.gillsoft.model.Currency;
 import com.gillsoft.model.Customer;
+import com.gillsoft.model.Lang;
 import com.gillsoft.model.Locality;
 import com.gillsoft.model.Organisation;
 import com.gillsoft.model.Price;
@@ -246,8 +247,8 @@ public class OrderServiceController extends AbstractOrderService {
 		Organisation organisation = organisations.get(key);
 		if (organisation == null) {
 			organisation = new Organisation();
-			organisation.setName(name);
-			organisation.setAddress(address);
+			organisation.setName(Lang.UA, name);
+			organisation.setAddress(Lang.UA, address);
 			organisation.setPhones(Arrays.asList(phone));
 			organisations.put(key, organisation);
 		}
