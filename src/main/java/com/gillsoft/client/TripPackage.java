@@ -19,6 +19,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.XmlValue;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.gillsoft.model.request.TripSearchRequest;
 
 
@@ -77,6 +79,7 @@ import com.gillsoft.model.request.TripSearchRequest;
     "error",
     "request"
 })
+@JsonInclude(Include.NON_NULL)
 public class TripPackage {
 
     @XmlElement(required = true)

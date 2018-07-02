@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 
@@ -55,6 +56,7 @@ import com.gillsoft.util.StringUtil;
 public class SearchServiceController extends AbstractTripSearchService {
 	
 	@Autowired
+	@Qualifier("MemoryCacheHandler")
 	private CacheHandler cache;
 
 	@Override
