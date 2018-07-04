@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gillsoft.abstract_rest_service.AbstractOrderService;
@@ -42,6 +43,9 @@ import com.gillsoft.util.StringUtil;
 
 @RestController
 public class OrderServiceController extends AbstractOrderService {
+	
+	@Autowired
+	private RestClient client;
 
 	@Override
 	public OrderResponse addServicesResponse(OrderRequest request) {
@@ -83,7 +87,7 @@ public class OrderServiceController extends AbstractOrderService {
 			TripIdModel model = new TripIdModel().create(params[0]);
 			try {
 				// получаем данные по билету в ресурсе
-				ResResult result = RestClient.getInstance().getTickets(
+				ResResult result = client.getTickets(
 						model.getIp(), model.getToId(), model.getTripId(), model.getDate(),
 						transactionId, order.getValue().size(), getSeats(order.getValue()));
 				if (result.getState() == 0) {
@@ -338,7 +342,7 @@ public class OrderServiceController extends AbstractOrderService {
 		// выкупаем заказы и формируем ответ
 		for (ServiceIdModel service : orderIdModel.getServices()) {
 			try {
-				Accepted accepted = RestClient.getInstance().confirmTickets(
+				Accepted accepted = client.confirmTickets(
 						service.getIp(), service.getTransactionId(), RestClient.SUCCESS_STATUS);
 				if (!Objects.equals(accepted.getPaystatus(), RestClient.CONFIRMED)) {
 					Error error = new Error();
@@ -378,7 +382,7 @@ public class OrderServiceController extends AbstractOrderService {
 		for (ServiceItem serviceItem : request.getServices()) {
 			ServiceIdModel model = new ServiceIdModel().create(serviceItem.getId());
 			try {
-				Confirmed confirmed = RestClient.getInstance().confirmReturn(
+				Confirmed confirmed = client.confirmReturn(
 						model.getIp(), model.getTicketNumber(), BigDecimal.ONE);
 				serviceItem.setConfirmed(confirmed != null);
 			} catch (Error e) {
@@ -401,7 +405,7 @@ public class OrderServiceController extends AbstractOrderService {
 		for (ServiceItem serviceItem : request.getServices()) {
 			ServiceIdModel model = new ServiceIdModel().create(serviceItem.getId());
 			try {
-				TicketType info = RestClient.getInstance().getReturnInfo(model.getIp(), model.getTicketNumber());
+				TicketType info = client.getReturnInfo(model.getIp(), model.getTicketNumber());
 				Price price = new Price();
 				price.setCurrency(Currency.UAH);
 				price.setAmount(info.getMoney().getCash());

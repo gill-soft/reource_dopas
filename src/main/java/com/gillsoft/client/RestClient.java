@@ -12,19 +12,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.gillsoft.cache.CacheHandler;
+import com.gillsoft.cache.IOCacheException;
+import com.gillsoft.cache.RedisMemoryCache;
 import com.gillsoft.logging.RequestResponseLoggingInterceptor;
 import com.gillsoft.util.RestTemplateUtil;
 
 import sun.misc.BASE64Encoder;
 
+@Component
+@Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class RestClient {
 	
 	private static final String GET_SALE_POINTS = "PBGetSalePoints";
@@ -75,29 +85,24 @@ public class RestClient {
 		ERROR_CODES.put(5009, "Не найдена информация о продаже билета.");
 		ERROR_CODES.put(5010, "Операция оплаты по данному билету не была произведена.");
     }
-	
-	private static RestClient instance;
+    
+    @Autowired
+    @Qualifier("RedisMemoryCache")
+	private CacheHandler cache;
 	
 	private RestTemplate template;
 	
-	private RestClient() {
-		template = createNewPoolingTemplate();
+	// для запросов поиска с меньшим таймаутом
+	private RestTemplate searchTemplate;
+	
+	public RestClient() {
+		template = createNewPoolingTemplate(Config.getRequestTimeout());
+		searchTemplate = createNewPoolingTemplate(Config.getSearchRequestTimeout());
 	}
 	
-	public static RestClient getInstance() {
-		if (instance == null) {
-			synchronized (RestClient.class) {
-				if (instance == null) {
-					instance = new RestClient();
-				}
-			}
-		}
-		return instance;
-	}
-	
-	public RestTemplate createNewPoolingTemplate() {
+	public RestTemplate createNewPoolingTemplate(int requestTimeout) {
 		RestTemplate template = new RestTemplate(new BufferingClientHttpRequestFactory(
-				RestTemplateUtil.createPoolingFactory(Config.getUrl(), 300, Config.getRequestTimeout())));
+				RestTemplateUtil.createPoolingFactory(Config.getUrl(), 300, requestTimeout)));
 		template.setMessageConverters(RestTemplateUtil.getMarshallingMessageConverters(Response.class));
 		template.setInterceptors(Collections.singletonList(
 				new RequestResponseLoggingInterceptor(Charset.forName("windows-1251")) {
@@ -150,7 +155,31 @@ public class RestClient {
 				.queryParam("to", to)
 				.queryParam("when", dateFormat.format(when))
 				.build().toUri();
-		return sendRequest(uri).getTripPackage();
+		Map<String, Object> params = new HashMap<>();
+		params.put(RedisMemoryCache.OBJECT_NAME, uri.toString());
+		params.put(RedisMemoryCache.UPDATE_TASK, new GetTripsTask(uri));
+		try {
+			Object result = cache.read(params);
+			if (result != null) {
+				return (TripPackage) result;
+			} else {
+				return null;
+			}
+		} catch (IOCacheException e) {
+			
+			// ставим пометку, что кэш еще формируется
+			TripPackage tripPackage = new TripPackage();
+			tripPackage.setContinueSearch(true);
+			return tripPackage;
+		} catch (Exception e) {
+			Error error = new Error();
+			error.setName(e.getMessage());
+			throw error;
+		}
+	}
+	
+	public TripPackage getTrips(URI uri) throws Error {
+		return sendRequest(searchTemplate, uri).getTripPackage();
 	}
 	
 	public Seats getSeats(String ip, String to, String tripId, String when) throws Error {
@@ -210,6 +239,10 @@ public class RestClient {
 	}
 	
 	private Response sendRequest(URI uri) throws Error {
+		return sendRequest(template, uri);
+	}
+	
+	private Response sendRequest(RestTemplate template, URI uri) throws Error {
 		Response response = template.getForObject(uri, Response.class);
 		if (response.getError() != null) {
 			throw response.getError();
@@ -234,6 +267,10 @@ public class RestClient {
 	
 	public static RestClientException createUnavailableMethod() {
 		return new RestClientException("Method is unavailable");
+	}
+
+	public CacheHandler getCache() {
+		return cache;
 	}
 	
 }

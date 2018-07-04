@@ -56,6 +56,9 @@ import com.gillsoft.util.StringUtil;
 public class SearchServiceController extends AbstractTripSearchService {
 	
 	@Autowired
+	private RestClient client;
+	
+	@Autowired
 	@Qualifier("MemoryCacheHandler")
 	private CacheHandler cache;
 
@@ -98,7 +101,7 @@ public class SearchServiceController extends AbstractTripSearchService {
 	public List<Seat> getSeatsResponse(String tripId) {
 		try {
 			TripIdModel model = new TripIdModel().create(tripId);
-			Seats seats = RestClient.getInstance().getSeats(
+			Seats seats = client.getSeats(
 					model.getIp(), model.getToId(), model.getTripId(), model.getDate());
 			if (seats != null
 					&& !seats.getSeat().isEmpty()) {
@@ -126,26 +129,37 @@ public class SearchServiceController extends AbstractTripSearchService {
 		List<Callable<TripPackage>> callables = new ArrayList<>();
 		for (final Date date : request.getDates()) {
 			for (final String[] pair : request.getLocalityPairs()) {
-				callables.add(() -> {
-					try {
-						validateSearchParams(pair, date);
-						TripPackage tripPackage = RestClient.getInstance().getTrips(
-								new PointIdModel().create(pair[0]).getIp(),
-								new PointIdModel().create(pair[1]).getId(),
-								date);
-						SearchServiceController.addRequest(tripPackage, pair, date);
-						return tripPackage;
-					} catch (Error e) {
-						TripPackage tripPackage = new TripPackage();
-						tripPackage.setError(e);
-						SearchServiceController.addRequest(tripPackage, pair, date);
-						return tripPackage;
-					}
-				});
+				addCallables(callables, date, pair);
 			}
 		}
 		// запускаем задания и полученные ссылки кладем в кэш
 		return putToCache(ThreadPoolStore.executeAll(PoolType.SEARCH, callables));
+	}
+	
+	private void addCallables(List<Callable<TripPackage>> callables, Date date, String[] pair) {
+		callables.add(() -> {
+			try {
+				validateSearchParams(pair, date);
+				TripPackage tripPackage = client.getTrips(
+						new PointIdModel().create(pair[0]).getIp(),
+						new PointIdModel().create(pair[1]).getId(),
+						date);
+				if (tripPackage == null) {
+					Error error = new Error();
+					error.setName("Empty result");
+					throw error;
+				}
+				SearchServiceController.addRequest(tripPackage, pair, date);
+				return tripPackage;
+			} catch (Error e) {
+				TripPackage tripPackage = new TripPackage();
+				tripPackage.setError(e);
+				SearchServiceController.addRequest(tripPackage, pair, date);
+				return tripPackage;
+			} catch (Exception e) {
+				return null;
+			}
+		});
 	}
 	
 	private static void validateSearchParams(String[] pair, Date date) throws Error {
@@ -197,6 +211,8 @@ public class SearchServiceController extends AbstractTripSearchService {
 			if (futures == null) {
 				throw new IOCacheException("Too late for getting result");
 			}
+			// список заданий на дополучение результата, которого еще не было в кэше
+			List<Callable<TripPackage>> callables = new ArrayList<>();
 			
 			// список ссылок, по которым нет еще результата
 			List<Future<TripPackage>> otherFutures = new CopyOnWriteArrayList<>();
@@ -210,12 +226,22 @@ public class SearchServiceController extends AbstractTripSearchService {
 			for (Future<TripPackage> future : futures) {
 				if (future.isDone()) {
 					try {
-						addResult(vehicles, localities, segments, containers, future.get());
+						TripPackage tripPackage = future.get();
+						if (!tripPackage.isContinueSearch()) {
+							addResult(vehicles, localities, segments, containers, tripPackage);
+						} else if (tripPackage.getRequest() != null) {
+							addCallables(callables, tripPackage.getRequest().getDates().get(0),
+									tripPackage.getRequest().getLocalityPairs().get(0));
+						}
 					} catch (InterruptedException | ExecutionException e) {
 					}
 				} else {
 					otherFutures.add(future);
 				}
+			}
+			// запускаем дополучение результата
+			if (!callables.isEmpty()) {
+				otherFutures.addAll(ThreadPoolStore.executeAll(PoolType.SEARCH, callables));
 			}
 			// оставшиеся ссылки кладем в кэш и получаем новый ид или заканчиваем поиск
 			TripSearchResponse response = null;

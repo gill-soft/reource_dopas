@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gillsoft.abstract_rest_service.AbstractLocalityService;
@@ -30,6 +31,9 @@ public class LocalityServiceController extends AbstractLocalityService {
 	private static Map<String, List<String>> binding = new ConcurrentHashMap<>();
 	
 	private static Map<String, Locality> internalAll = new ConcurrentHashMap<>();
+	
+	@Autowired
+	private RestClient client;
 
 	@Override
 	public List<Locality> getAllResponse(LocalityRequest request) {
@@ -60,7 +64,7 @@ public class LocalityServiceController extends AbstractLocalityService {
 			synchronized (LocalityServiceController.class) {
 				if (all == null) {
 					try {
-						Salepoints salepoints = RestClient.getInstance().getSalepoints();
+						Salepoints salepoints = client.getSalepoints();
 						if (salepoints != null
 								&& salepoints.getSalepoint() != null) {
 							all = new CopyOnWriteArraySet<>();
@@ -99,7 +103,7 @@ public class LocalityServiceController extends AbstractLocalityService {
 	
 	private List<Locality> getLocalities(Salepoint salepoint) {
 		try {
-			Stations stations = RestClient.getInstance().getStations(salepoint.getIp());
+			Stations stations = client.getStations(salepoint.getIp());
 			if (stations != null
 					&& stations.getStation() != null) {
 				List<Locality> localities = new ArrayList<>();

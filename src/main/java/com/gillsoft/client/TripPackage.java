@@ -8,6 +8,7 @@
 
 package com.gillsoft.client;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,12 +78,15 @@ import com.gillsoft.model.request.TripSearchRequest;
 @XmlType(name = "", propOrder = {
     "trips",
     "error",
-    "request"
+    "request",
+    "continueSearch"
 })
 @JsonInclude(Include.NON_NULL)
-public class TripPackage {
+public class TripPackage implements Serializable {
 
-    @XmlElement(required = true)
+	private static final long serialVersionUID = 773609564070460254L;
+
+	@XmlElement(required = true)
     protected TripPackage.Trips trips;
     
     @XmlElement(required = false)
@@ -90,6 +94,9 @@ public class TripPackage {
     
     @XmlElement(required = false)
     private TripSearchRequest request;
+    
+    @XmlElement(required = false)
+    private boolean continueSearch = false;
 
     /**
      * Gets the value of the trips property.
@@ -130,6 +137,14 @@ public class TripPackage {
 
 	public void setRequest(TripSearchRequest request) {
 		this.request = request;
+	}
+
+	public boolean isContinueSearch() {
+		return continueSearch;
+	}
+
+	public void setContinueSearch(boolean continueSearch) {
+		this.continueSearch = continueSearch;
 	}
 
 	/**
@@ -175,9 +190,11 @@ public class TripPackage {
     @XmlType(name = "", propOrder = {
         "trip"
     })
-    public static class Trips {
+    public static class Trips implements Serializable {
 
-        protected List<TripPackage.Trips.Trip> trip;
+		private static final long serialVersionUID = 5047980278010949124L;
+		
+		protected List<TripPackage.Trips.Trip> trip;
 
         /**
          * Gets the value of the trip property.
@@ -242,9 +259,11 @@ public class TripPackage {
         @XmlType(name = "", propOrder = {
             "value"
         })
-        public static class Trip {
+        public static class Trip implements Serializable {
 
-            @XmlValue
+			private static final long serialVersionUID = 6346525635598440654L;
+			
+			@XmlValue
             protected String value;
             @XmlAttribute(name = "id")
             protected String id;

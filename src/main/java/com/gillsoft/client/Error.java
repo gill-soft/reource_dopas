@@ -8,6 +8,7 @@
 
 package com.gillsoft.client;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,9 +67,9 @@ import com.gillsoft.client.Error.Data.Item;
     "name",
     "data"
 })
-public class Error extends Exception {
+public class Error extends Exception implements Serializable {
 
-	private static final long serialVersionUID = 5849316736867196119L;
+	private static final long serialVersionUID = 9161981793099196041L;
 	
 	@XmlElement(required = true)
     protected String code;
@@ -198,9 +199,11 @@ public class Error extends Exception {
     @XmlType(name = "", propOrder = {
         "item"
     })
-    public static class Data {
+    public static class Data implements Serializable {
 
-        protected List<Error.Data.Item> item;
+		private static final long serialVersionUID = -3651963381999102483L;
+		
+		protected List<Error.Data.Item> item;
 
         /**
          * Gets the value of the item property.
@@ -253,9 +256,11 @@ public class Error extends Exception {
         @XmlType(name = "", propOrder = {
             "value"
         })
-        public static class Item {
+        public static class Item implements Serializable {
 
-            @XmlValue
+			private static final long serialVersionUID = -1112382343242843464L;
+			
+			@XmlValue
             protected String value;
             @XmlAttribute(name = "text")
             protected String text;

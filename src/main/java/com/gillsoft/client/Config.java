@@ -13,7 +13,7 @@ public class Config {
 	
 	static {
 		try {
-			Resource resource = new ClassPathResource("resource-connection.properties");
+			Resource resource = new ClassPathResource("resource.properties");
 			properties = PropertiesLoaderUtils.loadProperties(resource);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -34,6 +34,26 @@ public class Config {
 	
 	public static int getRequestTimeout() {
 		return Integer.valueOf(properties.getProperty("request.timeout"));
+	}
+	
+	public static int getSearchRequestTimeout() {
+		return Integer.valueOf(properties.getProperty("request.search.timeout"));
+	}
+	
+	public static long getCacheTimeToLive() {
+		return Long.valueOf(properties.getProperty("cache.time.to.live"));
+	}
+	
+	public static long getCacheUpdateDelay() {
+		return Long.valueOf(properties.getProperty("cache.update.delay"));
+	}
+	
+	public static long getCacheErrorTimeToLive() {
+		return Long.valueOf(properties.getProperty("cache.error.time.to.live"));
+	}
+	
+	public static long getCacheErrorUpdateDelay() {
+		return Long.valueOf(properties.getProperty("cache.error.update.delay"));
 	}
 	
 }
