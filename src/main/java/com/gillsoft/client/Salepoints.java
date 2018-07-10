@@ -8,6 +8,7 @@
 
 package com.gillsoft.client;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,9 +52,11 @@ import javax.xml.bind.annotation.XmlValue;
 @XmlType(name = "", propOrder = {
     "salepoint"
 })
-public class Salepoints {
+public class Salepoints implements Serializable {
 
-    protected List<Salepoints.Salepoint> salepoint;
+	private static final long serialVersionUID = -2158412869240266148L;
+	
+	protected List<Salepoints.Salepoint> salepoint;
 
     /**
      * Gets the value of the salepoint property.
@@ -108,9 +111,11 @@ public class Salepoints {
     @XmlType(name = "", propOrder = {
         "value"
     })
-    public static class Salepoint {
+    public static class Salepoint implements Serializable {
 
-        @XmlValue
+		private static final long serialVersionUID = 8732429368707321254L;
+		
+		@XmlValue
         protected String value;
         @XmlAttribute(name = "id")
         protected String id;

@@ -7,6 +7,8 @@ import com.gillsoft.model.AbstractJsonModel;
 
 public class OrderIdModel extends AbstractJsonModel {
 	
+	private static final long serialVersionUID = 5661521517528841959L;
+	
 	private List<ServiceIdModel> services = new ArrayList<>();
 
 	public List<ServiceIdModel> getServices() {

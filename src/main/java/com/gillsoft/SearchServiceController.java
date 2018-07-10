@@ -5,13 +5,9 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,21 +15,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 
-import com.gillsoft.abstract_rest_service.AbstractTripSearchService;
+import com.gillsoft.abstract_rest_service.SimpleAbstractTripSearchService;
 import com.gillsoft.cache.CacheHandler;
-import com.gillsoft.cache.IOCacheException;
-import com.gillsoft.cache.MemoryCacheHandler;
 import com.gillsoft.client.Error;
 import com.gillsoft.client.PointIdModel;
 import com.gillsoft.client.RestClient;
 import com.gillsoft.client.Seats;
 import com.gillsoft.client.TripIdModel;
 import com.gillsoft.client.TripPackage;
-import com.gillsoft.concurrent.PoolType;
-import com.gillsoft.concurrent.ThreadPoolStore;
 import com.gillsoft.model.Currency;
 import com.gillsoft.model.Document;
 import com.gillsoft.model.Locality;
+import com.gillsoft.model.Organisation;
 import com.gillsoft.model.Price;
 import com.gillsoft.model.Required;
 import com.gillsoft.model.RestError;
@@ -53,7 +46,7 @@ import com.gillsoft.model.response.TripSearchResponse;
 import com.gillsoft.util.StringUtil;
 
 @RestController
-public class SearchServiceController extends AbstractTripSearchService {
+public class SearchServiceController extends SimpleAbstractTripSearchService<TripPackage> {
 	
 	@Autowired
 	private RestClient client;
@@ -124,23 +117,15 @@ public class SearchServiceController extends AbstractTripSearchService {
 
 	@Override
 	public TripSearchResponse initSearchResponse(TripSearchRequest request) {
-		
-		// формируем задания поиска
-		List<Callable<TripPackage>> callables = new ArrayList<>();
-		for (final Date date : request.getDates()) {
-			for (final String[] pair : request.getLocalityPairs()) {
-				addCallables(callables, date, pair);
-			}
-		}
-		// запускаем задания и полученные ссылки кладем в кэш
-		return putToCache(ThreadPoolStore.executeAll(PoolType.SEARCH, callables));
+		return simpleInitSearchResponse(cache, request);
 	}
 	
-	private void addCallables(List<Callable<TripPackage>> callables, Date date, String[] pair) {
+	@Override
+	public void addInitSearchCallables(List<Callable<TripPackage>> callables, String[] pair, Date date) {
 		callables.add(() -> {
 			try {
 				validateSearchParams(pair, date);
-				TripPackage tripPackage = client.getTrips(
+				TripPackage tripPackage = client.getCachedTrips(
 						new PointIdModel().create(pair[0]).getIp(),
 						new PointIdModel().create(pair[1]).getId(),
 						date);
@@ -149,12 +134,12 @@ public class SearchServiceController extends AbstractTripSearchService {
 					error.setName("Empty result");
 					throw error;
 				}
-				SearchServiceController.addRequest(tripPackage, pair, date);
+				tripPackage.setRequest(TripSearchRequest.createRequest(pair, date));
 				return tripPackage;
 			} catch (Error e) {
 				TripPackage tripPackage = new TripPackage();
 				tripPackage.setError(e);
-				SearchServiceController.addRequest(tripPackage, pair, date);
+				tripPackage.setRequest(TripSearchRequest.createRequest(pair, date));
 				return tripPackage;
 			} catch (Exception e) {
 				return null;
@@ -176,87 +161,20 @@ public class SearchServiceController extends AbstractTripSearchService {
 		}
 	}
 	
-	private static void addRequest(TripPackage tripPackage, String[] pair, Date date) {
-		TripSearchRequest request = new TripSearchRequest();
-		List<String[]> pairs = new ArrayList<>(1);
-		pairs.add(pair);
-		request.setLocalityPairs(pairs);
-		List<Date> dates = new ArrayList<>(1);
-		dates.add(date);
-		request.setDates(dates);
-		tripPackage.setRequest(request);
-	}
-	
-	private TripSearchResponse putToCache(List<Future<TripPackage>> futures) {
-		String searchId = StringUtil.generateUUID();
-		Map<String, Object> params = new HashMap<>();
-		params.put(MemoryCacheHandler.OBJECT_NAME, searchId);
-		params.put(MemoryCacheHandler.TIME_TO_LIVE, 60000l);
-		try {
-			cache.write(futures, params);
-			return new TripSearchResponse(null, searchId);
-		} catch (IOCacheException e) {
-			return new TripSearchResponse(null, e);
-		}
+	@Override
+	public TripSearchResponse getSearchResultResponse(String searchId) {
+		return simpleGetSearchResponse(cache, searchId);
 	}
 	
 	@Override
-	public TripSearchResponse getSearchResultResponse(String searchId) {
-		Map<String, Object> params = new HashMap<>();
-		params.put(MemoryCacheHandler.OBJECT_NAME, searchId);
-		try {
-			// вытаскиваем с кэша ссылки, по которым нужно получить результат поиска
-			@SuppressWarnings("unchecked")
-			List<Future<TripPackage>> futures = (List<Future<TripPackage>>) cache.read(params);
-			if (futures == null) {
-				throw new IOCacheException("Too late for getting result");
-			}
-			// список заданий на дополучение результата, которого еще не было в кэше
-			List<Callable<TripPackage>> callables = new ArrayList<>();
-			
-			// список ссылок, по которым нет еще результата
-			List<Future<TripPackage>> otherFutures = new CopyOnWriteArrayList<>();
-			
-			// идем по ссылкам и из выполненных берем результат, а с
-			// невыполненных формируем список для следующего запроса результата
-			Map<String, Vehicle> vehicles = new HashMap<>();
-			Map<String, Locality> localities = new HashMap<>();
-			Map<String, Segment> segments = new HashMap<>();
-			List<TripContainer> containers = new ArrayList<>();
-			for (Future<TripPackage> future : futures) {
-				if (future.isDone()) {
-					try {
-						TripPackage tripPackage = future.get();
-						if (!tripPackage.isContinueSearch()) {
-							addResult(vehicles, localities, segments, containers, tripPackage);
-						} else if (tripPackage.getRequest() != null) {
-							addCallables(callables, tripPackage.getRequest().getDates().get(0),
-									tripPackage.getRequest().getLocalityPairs().get(0));
-						}
-					} catch (InterruptedException | ExecutionException e) {
-					}
-				} else {
-					otherFutures.add(future);
-				}
-			}
-			// запускаем дополучение результата
-			if (!callables.isEmpty()) {
-				otherFutures.addAll(ThreadPoolStore.executeAll(PoolType.SEARCH, callables));
-			}
-			// оставшиеся ссылки кладем в кэш и получаем новый ид или заканчиваем поиск
-			TripSearchResponse response = null;
-			if (!otherFutures.isEmpty()) {
-				response = putToCache(otherFutures);
-			} else {
-				response = new TripSearchResponse();
-			}
-			response.setVehicles(vehicles);
-			response.setLocalities(localities);
-			response.setSegments(segments);
-			response.setTripContainers(containers);
-			return response;
-		} catch (IOCacheException e) {
-			return new TripSearchResponse(null, e);
+	public void addNextGetSearchCallablesAndResult(List<Callable<TripPackage>> callables, Map<String, Vehicle> vehicles,
+			Map<String, Locality> localities, Map<String, Organisation> organisations, Map<String, Segment> segments,
+			List<TripContainer> containers, TripPackage tripPackage) {
+		if (!tripPackage.isContinueSearch()) {
+			addResult(vehicles, localities, segments, containers, tripPackage);
+		} else if (tripPackage.getRequest() != null) {
+			addInitSearchCallables(callables, tripPackage.getRequest().getLocalityPairs().get(0),
+					tripPackage.getRequest().getDates().get(0));
 		}
 	}
 	

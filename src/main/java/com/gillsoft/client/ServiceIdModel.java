@@ -9,6 +9,8 @@ import com.gillsoft.model.AbstractJsonModel;
 @JsonInclude(Include.NON_NULL)
 public class ServiceIdModel extends AbstractJsonModel {
 	
+	private static final long serialVersionUID = 5711374909509816558L;
+
 	private String ip;
 	
 	private String transactionId;

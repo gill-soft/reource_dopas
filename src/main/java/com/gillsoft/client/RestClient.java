@@ -37,6 +37,9 @@ import sun.misc.BASE64Encoder;
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class RestClient {
 	
+	public static final String STATIONS_CACHE_KEY = "dopas.stations.";
+	public static final String TRIPS_CACHE_KEY = "dopas.trips.";
+	
 	private static final String GET_SALE_POINTS = "PBGetSalePoints";
 	private static final String GET_STATIONS = "PBGetStations";
 	private static final String GET_HASH = "PBGetStationsHash";
@@ -117,26 +120,47 @@ public class RestClient {
 		return template;
 	}
 	
-	public Salepoints getSalepoints() throws Error {
-		URI uri = UriComponentsBuilder.fromUriString(Config.getUrl())
-				.queryParam("Action", GET_SALE_POINTS).build().toUri();
+	public Salepoints getSalepoints(URI uri) throws Error {
 		return sendRequest(uri).getSalepoints();
 	}
 	
-	public Stations getStations(String ip) throws Error {
-		return getStationsInfo(ip, GET_STATIONS);
+	public Salepoints getCachedSalepoints() throws IOCacheException {
+		URI uri = UriComponentsBuilder.fromUriString(Config.getUrl())
+				.queryParam("Action", GET_SALE_POINTS).build().toUri();
+		Map<String, Object> params = new HashMap<>();
+		params.put(RedisMemoryCache.OBJECT_NAME, getStationCacheKey(uri));
+		return (Salepoints) getCachedStations(uri, new SalepointsUpdateTask(uri));
+	}
+	
+	public Stations getStations(URI uri) throws Error {
+		return getStationsInfo(uri);
+	}
+	
+	public Stations getCachedStations(String ip) throws IOCacheException {
+		URI uri = getStationsUri(ip, GET_STATIONS);
+		return (Stations) getCachedStations(uri, new StationsUpdateTask(uri));
+	}
+	
+	public Object getCachedStations(URI uri, Runnable task) throws IOCacheException {
+		Map<String, Object> params = new HashMap<>();
+		params.put(RedisMemoryCache.OBJECT_NAME, getStationCacheKey(uri));
+		params.put(RedisMemoryCache.UPDATE_TASK, task);
+		return cache.read(params);
 	}
 	
 	public Stations getStationsHash(String ip) throws Error {
-		return getStationsInfo(ip, GET_HASH);
+		return getStationsInfo(getStationsUri(ip, GET_HASH));
 	}
 	
-	private Stations getStationsInfo(String ip, String method) throws Error {
-		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
+	private Stations getStationsInfo(URI uri) throws Error {
+		return sendRequest(uri).getStations();
+	}
+	
+	private URI getStationsUri(String ip, String method) {
+		return UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", method)
 				.queryParam("postid", Config.getOrganisation())
 				.build().toUri();
-		return sendRequest(uri).getStations();
 	}
 	
 	public Schedule getSchedule(String ip, boolean hashOnly) throws Error {
@@ -148,7 +172,7 @@ public class RestClient {
 		return sendRequest(uri).getSchedule();
 	}
 	
-	public TripPackage getTrips(String ip, String to, Date when) throws Error {
+	public TripPackage getCachedTrips(String ip, String to, Date when) throws Error {
 		URI uri = UriComponentsBuilder.fromUriString(getHost(ip))
 				.queryParam("Action", GET_TRIPS)
 				.queryParam("postid", Config.getOrganisation())
@@ -156,15 +180,10 @@ public class RestClient {
 				.queryParam("when", dateFormat.format(when))
 				.build().toUri();
 		Map<String, Object> params = new HashMap<>();
-		params.put(RedisMemoryCache.OBJECT_NAME, uri.toString());
+		params.put(RedisMemoryCache.OBJECT_NAME, getTripsCacheKey(uri));
 		params.put(RedisMemoryCache.UPDATE_TASK, new GetTripsTask(uri));
 		try {
-			Object result = cache.read(params);
-			if (result != null) {
-				return (TripPackage) result;
-			} else {
-				return null;
-			}
+			return (TripPackage) cache.read(params);
 		} catch (IOCacheException e) {
 			
 			// ставим пометку, что кэш еще формируется
@@ -271,6 +290,14 @@ public class RestClient {
 
 	public CacheHandler getCache() {
 		return cache;
+	}
+	
+	public static String getStationCacheKey(URI uri) {
+		return STATIONS_CACHE_KEY + uri.toString();
+	}
+	
+	public static String getTripsCacheKey(URI uri) {
+		return TRIPS_CACHE_KEY + uri.toString();
 	}
 	
 }

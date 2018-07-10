@@ -4,6 +4,8 @@ import com.gillsoft.model.AbstractJsonModel;
 
 public class TripIdModel extends AbstractJsonModel {
 
+	private static final long serialVersionUID = -4570318053620484041L;
+
 	private String ip;
 	
 	private String fromId;

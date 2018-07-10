@@ -48,20 +48,10 @@ public class ResourceServiceController extends AbstractResourceService {
 		addMethod(methods, "Confirm order return", Method.ORDER_RETURN_CONFIRM, MethodType.POST);
 		return methods;
 	}
-	
-	private void addMethod(List<Method> methods, String name, String url, MethodType type) {
-		Method method = new Method();
-		method.setName(name);
-		method.setUrl(url);
-		method.setType(type);
-		methods.add(method);
-	}
 
 	@Override
 	public Ping pingResponse(String id) {
-		Ping ping = new Ping();
-		ping.setId(id);
-		return ping;
+		return createPing(id);
 	}
 
 }

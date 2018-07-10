@@ -14,8 +14,7 @@
         http://www.springframework.org/schema/task
         http://www.springframework.org/schema/task/spring-task-4.3.xsd">
 
-	<context:component-scan
-		base-package="com.gillsoft, com.gillsoft.abstract_rest_service" />
+	<context:component-scan base-package="com.gillsoft" />
 	<mvc:annotation-driven />
 	<task:annotation-driven />
 </beans>

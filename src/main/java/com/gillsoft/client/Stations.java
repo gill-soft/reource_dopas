@@ -8,6 +8,7 @@
 
 package com.gillsoft.client;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,9 +52,11 @@ import javax.xml.bind.annotation.XmlValue;
 @XmlType(name = "", propOrder = {
     "station"
 })
-public class Stations {
+public class Stations implements Serializable {
 
-    protected List<Stations.Station> station;
+	private static final long serialVersionUID = 4230522337470366697L;
+	
+	protected List<Stations.Station> station;
     @XmlAttribute(name = "hash")
     protected String hash;
 
@@ -133,9 +136,11 @@ public class Stations {
     @XmlType(name = "", propOrder = {
         "value"
     })
-    public static class Station {
+    public static class Station implements Serializable {
 
-        @XmlValue
+		private static final long serialVersionUID = 632681158813851326L;
+		
+		@XmlValue
         protected String value;
         @XmlAttribute(name = "id")
         protected String id;
