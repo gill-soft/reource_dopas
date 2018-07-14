@@ -28,7 +28,7 @@ import com.gillsoft.model.Document;
 import com.gillsoft.model.Locality;
 import com.gillsoft.model.Organisation;
 import com.gillsoft.model.Price;
-import com.gillsoft.model.Required;
+import com.gillsoft.model.RequiredField;
 import com.gillsoft.model.RestError;
 import com.gillsoft.model.ReturnCondition;
 import com.gillsoft.model.Route;
@@ -71,7 +71,7 @@ public class SearchServiceController extends SimpleAbstractTripSearchService<Tri
 	}
 
 	@Override
-	public Required getRequiredFieldsResponse(String arg0) {
+	public List<RequiredField> getRequiredFieldsResponse(String arg0) {
 		throw RestClient.createUnavailableMethod();
 	}
 
