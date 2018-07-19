@@ -268,6 +268,7 @@ public class SearchServiceController extends SimpleAbstractTripSearchService<Tri
 		tripPrice.setCurrency(Currency.UAH);
 		tripPrice.setAmount(price);
 		tripPrice.setTariff(tariff);
+		segment.setPrice(tripPrice);
 	}
 	
 	public static void addVehicle(Map<String, Vehicle> vehicles, Segment segment, String model) {
