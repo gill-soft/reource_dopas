@@ -32,10 +32,17 @@ public abstract class AbstractStationsUpdateTask implements Runnable, Serializab
 		
 		try {
 			RestClient client = ContextProvider.getBean(RestClient.class);
-			Object cacheObject = createCacheObject(client, params);
+			Object cacheObject = null;
+			try {
+				cacheObject = createCacheObject(client, params);
+			} catch (Error e) {
+			}
+			if (cacheObject == null) {
+				cacheObject = client.getCache().read(params);
+			}
 			params.put(RedisMemoryCache.UPDATE_TASK, this);
 			client.getCache().write(cacheObject, params);
-		} catch (Error | IOCacheException e) {
+		} catch (IOCacheException e) {
 		}
 	}
 	

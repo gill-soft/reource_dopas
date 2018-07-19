@@ -19,11 +19,7 @@ public class StationsUpdateTask extends AbstractStationsUpdateTask {
 
 	@Override
 	protected Object createCacheObject(RestClient client, Map<String, Object> params) throws IOCacheException, Error {
-		Stations stations = client.getStations(uri);
-		if (stations == null) {
-			stations = (Stations) client.getCache().read(params);
-		}
-		return stations;
+		return client.getStations(uri);
 	}
 
 }
