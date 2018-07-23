@@ -131,7 +131,6 @@ public class OrderServiceController extends AbstractOrderService {
 			}
 		}
 		response.setOrderId(orderId.asString());
-		response.setCustomers(request.getCustomers());
 		response.setLocalities(localities);
 		response.setOrganisations(organisations);
 		response.setSegments(segments);
