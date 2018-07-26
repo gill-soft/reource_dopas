@@ -94,8 +94,8 @@ public class LocalityServiceController extends AbstractLocalityService {
 								LocalityServiceController.all = all;
 								LocalityServiceController.internalAll = internalAll;
 								LocalityServiceController.binding = binding;
-								cacheError = false;
 							}
+							cacheError = false;
 						} catch (IOCacheException e) {
 							try {
 								TimeUnit.MILLISECONDS.sleep(100);

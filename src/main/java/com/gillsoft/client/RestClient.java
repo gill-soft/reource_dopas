@@ -30,8 +30,7 @@ import com.gillsoft.cache.IOCacheException;
 import com.gillsoft.cache.RedisMemoryCache;
 import com.gillsoft.logging.RequestResponseLoggingInterceptor;
 import com.gillsoft.util.RestTemplateUtil;
-
-import sun.misc.BASE64Encoder;
+import com.gillsoft.util.StringUtil;
 
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
@@ -57,25 +56,25 @@ public class RestClient {
 	public static final String TIME_FORMAT = "HH:mm";
 	public static final String DECIMAL_FORMAT = "%.5f";
 	
-	public final static FastDateFormat dateFormat = FastDateFormat.getInstance(DATE_FORMAT);
-	public final static FastDateFormat fullDateFormat = FastDateFormat.getInstance(FULL_DATE_FORMAT);
+	public static final FastDateFormat dateFormat = FastDateFormat.getInstance(DATE_FORMAT);
+	public static final FastDateFormat fullDateFormat = FastDateFormat.getInstance(FULL_DATE_FORMAT);
 	
-	public final static int TARIFF_1_CODE = 48;
-    public final static int INSURANCE_CODE = 50;
-    public final static int STATION_CODE = 57;
-    public final static int TARIFF_2_CODE = 67;
-    public final static int REMOTE_CODE = 55;
-    public final static int ADVANCE_CODE = 68;
-    public final static String TARIFF_1_NAME = "Тариф 1";
-    public final static String TARIFF_2_NAME = "Тариф 2";
+	public static final int TARIFF_1_CODE = 48;
+    public static final int INSURANCE_CODE = 50;
+    public static final int STATION_CODE = 57;
+    public static final int TARIFF_2_CODE = 67;
+    public static final int REMOTE_CODE = 55;
+    public static final int ADVANCE_CODE = 68;
+    public static final String TARIFF_1_NAME = "Тариф 1";
+    public static final String TARIFF_2_NAME = "Тариф 2";
     
-    public final static String SIGNATURE_METHOD = "SHA1";
-    public final static String SUCCESS_STATUS = "success";
-    public final static String FAILURE_STATUS = "failure";
-    public final static String CONFIRMED = "confirmed";
-    public final static String CANCEL_PERCENT = "1";
+    public static final String SIGNATURE_METHOD = "SHA1";
+    public static final String SUCCESS_STATUS = "success";
+    public static final String FAILURE_STATUS = "failure";
+    public static final String CONFIRMED = "confirmed";
+    public static final String CANCEL_PERCENT = "1";
     
-    private final static Map<Integer, String> ERROR_CODES = new HashMap<>();
+    private static final Map<Integer, String> ERROR_CODES = new HashMap<>();
     
     static {
 		ERROR_CODES.put(5001, "Попытка вернуть билет чужой организации.");
@@ -262,11 +261,17 @@ public class RestClient {
 	}
 	
 	private Response sendRequest(RestTemplate template, URI uri) throws Error {
-		Response response = template.getForObject(uri, Response.class);
-		if (response.getError() != null) {
-			throw response.getError();
-		} else {
-			return response;
+		try {
+			Response response = template.getForObject(uri, Response.class);
+			if (response.getError() != null) {
+				throw response.getError();
+			} else {
+				return response;
+			}
+		} catch (RestClientException e) {
+			Error error = new Error();
+			error.setName(e.getMessage());
+			throw error;
 		}
 	}
 	
@@ -281,7 +286,7 @@ public class RestClient {
         }
         MessageDigest md = MessageDigest.getInstance(SIGNATURE_METHOD);
         md.update(signature.getBytes());
-        return new BASE64Encoder().encode(md.digest());
+        return StringUtil.toBase64(md.digest());
     }
 	
 	public static RestClientException createUnavailableMethod() {

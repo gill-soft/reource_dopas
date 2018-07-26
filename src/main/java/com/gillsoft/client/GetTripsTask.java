@@ -31,13 +31,13 @@ public class GetTripsTask implements Runnable, Serializable {
 		Map<String, Object> params = new HashMap<>();
 		params.put(RedisMemoryCache.OBJECT_NAME, RestClient.getTripsCacheKey(uri));
 		params.put(RedisMemoryCache.UPDATE_TASK, this);
-		params.put(RedisMemoryCache.UPDATE_DELAY, Config.getCacheTripUpdateDelay());
 		TripPackage tripPackage = null;
 		
 		// получаем рейсы для создания кэша
 		RestClient client = ContextProvider.getBean(RestClient.class);
 		try {
 			tripPackage = client.getTrips(uri);
+			params.put(RedisMemoryCache.UPDATE_DELAY, Config.getCacheTripUpdateDelay());
 			params.put(RedisMemoryCache.TIME_TO_LIVE, getTimeToLive(tripPackage));
 		} catch (Error e) {
 			
