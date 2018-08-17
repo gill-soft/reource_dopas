@@ -28,7 +28,7 @@ public class ClientHttpResponseWrapper implements ClientHttpResponse {
 	public InputStream getBody() throws IOException {
 		if (response.getBody() != null) {
 			if (this.responseBody == null) {
-				String responseBody = StreamUtils.copyToString(response.getBody(), Charset.defaultCharset());
+				String responseBody = StreamUtils.copyToString(response.getBody(), Charset.forName(RestClient.DEFAULT_CHARSET));
 				int index = responseBody.indexOf("?>");
 				if (index > -1) {
 					responseBody = responseBody.substring(0, index + 2) + "<data>"
@@ -36,7 +36,7 @@ public class ClientHttpResponseWrapper implements ClientHttpResponse {
 				}
 				this.responseBody = responseBody;
 			}
-			return new ByteArrayInputStream(this.responseBody.getBytes());
+			return new ByteArrayInputStream(this.responseBody.getBytes(Charset.forName(RestClient.DEFAULT_CHARSET)));
 		}
 		return response.getBody();
 	}

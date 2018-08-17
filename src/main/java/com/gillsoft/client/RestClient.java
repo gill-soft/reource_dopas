@@ -107,7 +107,7 @@ public class RestClient {
 				RestTemplateUtil.createPoolingFactory(Config.getUrl(), 300, requestTimeout)));
 		template.setMessageConverters(RestTemplateUtil.getMarshallingMessageConverters(Response.class));
 		template.setInterceptors(Collections.singletonList(
-				new RequestResponseLoggingInterceptor(Charset.forName("windows-1251")) {
+				new RequestResponseLoggingInterceptor(Charset.forName(DEFAULT_CHARSET)) {
 
 					@Override
 					public ClientHttpResponse execute(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
