@@ -196,11 +196,11 @@ public class OrderServiceController extends AbstractOrderService {
 				priceTariff.setValue(priceTariff.getValue().add(tariff.getCash()));
 				priceTariff.setCode(priceTariff.getCode().concat(",").concat(
 						String.valueOf(tariff.getCode())));
-				priceTariff.setName(priceTariff.getName().concat(",").concat(
+				priceTariff.setName(priceTariff.getName(Lang.EN).concat(",").concat(
 						String.valueOf(tariff.getText())));
 			}
 		}
-		priceTariff.setName(priceTariff.getName().replaceFirst("^,", ""));
+		priceTariff.setName(priceTariff.getName(Lang.EN).replaceFirst("^,", ""));
 		if (priceTariff.getCode() != null) {
 			priceTariff.setCode(priceTariff.getCode().replaceFirst("^,", ""));
 		}
