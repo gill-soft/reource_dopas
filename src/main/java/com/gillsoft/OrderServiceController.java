@@ -385,6 +385,7 @@ public class OrderServiceController extends AbstractOrderService {
 						model.getIp(), model.getTicketNumber(), BigDecimal.ONE);
 				serviceItem.setConfirmed(confirmed != null);
 			} catch (Error e) {
+				serviceItem.setConfirmed(false);
 				serviceItem.setError(new RestError(e.getMessage()));
 			}
 			response.getServices().add(serviceItem);
