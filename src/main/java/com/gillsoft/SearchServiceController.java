@@ -72,7 +72,12 @@ public class SearchServiceController extends SimpleAbstractTripSearchService<Tri
 
 	@Override
 	public List<RequiredField> getRequiredFieldsResponse(String arg0) {
-		throw RestClient.createUnavailableMethod();
+		List<RequiredField> requiredFields = new ArrayList<>();
+		requiredFields.add(RequiredField.NAME);
+		requiredFields.add(RequiredField.SURNAME);
+		requiredFields.add(RequiredField.PHONE);
+		requiredFields.add(RequiredField.EMAIL);
+		return requiredFields;
 	}
 
 	@Override
