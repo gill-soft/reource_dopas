@@ -77,10 +77,10 @@ public class LocalityServiceController extends AbstractLocalityService {
 								Map<String, List<String>> binding = new ConcurrentHashMap<>();
 								for (Salepoint point : salepoints.getSalepoint()) {
 									Locality dispatch = new Locality();
-									dispatch.setId(new PointIdModel(point.getId(), point.getIp(), null).asString());
+									dispatch.setId(new PointIdModel(null, point.getIp()).asString());
 									dispatch.setName(Lang.UA, point.getName());
 									all.add(dispatch);
-									internalAll.put(point.getId(), dispatch);
+									internalAll.put(point.getIp(), dispatch);
 									List<Locality> arrivals = getLocalities(internalAll, point);
 									if (arrivals != null) {
 										List<String> arrivalIds = new CopyOnWriteArrayList<>();
@@ -115,10 +115,10 @@ public class LocalityServiceController extends AbstractLocalityService {
 			List<Locality> localities = new ArrayList<>();
 			for (Station station : stations.getStation()) {
 				Locality arrival = new Locality();
-				arrival.setId(new PointIdModel(salepoint.getId(), salepoint.getIp(), station.getId()).asString());
+				arrival.setId(new PointIdModel(station.getId(), salepoint.getIp()).asString());
 				arrival.setName(Lang.UA, station.getName());
 				localities.add(arrival);
-				internalAll.put(String.join(";", salepoint.getId(), station.getId()), arrival);
+				internalAll.put(String.join(";", salepoint.getIp(), station.getId()), arrival);
 			}
 			return localities;
 		}

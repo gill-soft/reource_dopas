@@ -69,7 +69,7 @@ import com.gillsoft.client.Error.Data.Item;
 })
 public class Error extends Exception implements Serializable {
 
-	private static final long serialVersionUID = 9161981793099196041L;
+	private static final long serialVersionUID = -7327463255473947687L;
 	
 	@XmlElement(required = true)
     protected String code;
@@ -78,7 +78,30 @@ public class Error extends Exception implements Serializable {
     @XmlElement(required = true)
     protected Error.Data data;
     
-    @Override
+    public Error() {
+		super();
+	}
+
+	public Error(String message) {
+		super(message);
+		addDataItem(message);
+	}
+
+	public Error(Throwable cause) {
+		super(cause);
+		addDataItem(cause.getMessage());
+	}
+	
+	private void addDataItem(String itemText) {
+		Item item = new Item();
+		item.setText(itemText);
+		if (data == null) {
+			data = new Data();
+		}
+		data.getItem().add(item);
+	}
+
+	@Override
     public String getMessage() {
     	StringBuilder message = new StringBuilder();
     	message.append("code: ").append(code).append(" name: ").append(name);

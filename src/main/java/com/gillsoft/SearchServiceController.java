@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang.time.DateUtils;
@@ -142,27 +143,37 @@ public class SearchServiceController extends SimpleAbstractTripSearchService<Tri
 				tripPackage.setRequest(TripSearchRequest.createRequest(pair, date));
 				return tripPackage;
 			} catch (Error e) {
-				TripPackage tripPackage = new TripPackage();
-				tripPackage.setError(e);
-				tripPackage.setRequest(TripSearchRequest.createRequest(pair, date));
-				return tripPackage;
+				return createErrorPackage(e, pair, date);
 			} catch (Exception e) {
-				return null;
+				return createErrorPackage(new Error(e), pair, date);
 			}
 		});
 	}
 	
-	private static void validateSearchParams(String[] pair, Date date) throws Error {
+	private TripPackage createErrorPackage(Error error, String[] pair, Date date) {
+		TripPackage tripPackage = new TripPackage();
+		tripPackage.setError(error);
+		tripPackage.setRequest(TripSearchRequest.createRequest(pair, date));
+		return tripPackage;
+	}
+	
+	private void validateSearchParams(String[] pair, Date date) throws Error {
 		if (date == null
 				|| date.getTime() < DateUtils.truncate(new Date(), Calendar.DATE).getTime()) {
-			Error error = new Error();
-			error.setName("Invalid parameter \"date\"");
-			throw error;
+			throw new Error("Invalid parameter \"date\"");
 		}
 		if (pair == null || pair.length < 2) {
-			Error error = new Error();
-			error.setName("Invalid parameter \"pair\"");
-			throw error;
+			throw new Error("Invalid parameter \"pair\"");
+		}
+		// у пунктов отправления id == null, иначе это пункт прибытия и поиск невозможен
+		PointIdModel from = new PointIdModel().create(pair[0]);
+		if (from.getId() != null) {
+			throw new Error("Selected dispatch is disabled");
+		}
+		// ip пункта прибытия должен быть равен ip пункта отправления
+		PointIdModel to = new PointIdModel().create(pair[1]);
+		if (!Objects.equals(from.getIp(), to.getIp())) {
+			throw new Error("Selected arrival is disabled for selected dispatch");
 		}
 	}
 	
@@ -198,7 +209,6 @@ public class SearchServiceController extends SimpleAbstractTripSearchService<Tri
 				PointIdModel to = new PointIdModel().create(tripPackage.getRequest().getLocalityPairs().get(0)[1]);
 				String segmentKey = new TripIdModel(
 						from.getIp(),
-						from.getId(),
 						to.getId(),
 						RestClient.dateFormat.format(tripPackage.getRequest().getDates().get(0)),
 						trip.getId()).asString();
@@ -206,7 +216,7 @@ public class SearchServiceController extends SimpleAbstractTripSearchService<Tri
 				// сегменты
 				Trip resTrip = new Trip();
 				resTrip.setId(segmentKey);
-				addSegment(segmentKey, from.getId(), to.getId(), vehicles, localities, segments, trip);
+				addSegment(segmentKey, from.getIp(), to.getId(), vehicles, localities, segments, trip);
 				trips.add(resTrip);
 			}
 			container.setTrips(trips);

@@ -226,9 +226,9 @@ public class OrderServiceController extends AbstractOrderService {
 			setSegmentFields(segment, ticket);
 			
 			// станции
-			segment.setDeparture(SearchServiceController.addStation(localities, model.getFromId()));
+			segment.setDeparture(SearchServiceController.addStation(localities, model.getIp()));
 			segment.setArrival(SearchServiceController.addStation(localities,
-					String.join(";", model.getFromId(), model.getToId())));
+					String.join(";", model.getIp(), model.getToId())));
 			
 			// перевозчик
 			segment.setCarrier(addOrganisation(organisations,

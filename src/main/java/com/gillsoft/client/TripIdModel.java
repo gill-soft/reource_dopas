@@ -4,11 +4,9 @@ import com.gillsoft.model.AbstractJsonModel;
 
 public class TripIdModel extends AbstractJsonModel {
 
-	private static final long serialVersionUID = -4570318053620484041L;
+	private static final long serialVersionUID = 488895518243117139L;
 
 	private String ip;
-	
-	private String fromId;
 
 	private String toId;
 
@@ -20,9 +18,8 @@ public class TripIdModel extends AbstractJsonModel {
 
 	}
 
-	public TripIdModel(String ip, String fromId, String toId, String date, String tripId) {
+	public TripIdModel(String ip, String toId, String date, String tripId) {
 		this.ip = ip;
-		this.fromId = fromId;
 		this.toId = toId;
 		this.date = date;
 		this.tripId = tripId;
@@ -34,14 +31,6 @@ public class TripIdModel extends AbstractJsonModel {
 
 	public void setIp(String ip) {
 		this.ip = ip;
-	}
-
-	public String getFromId() {
-		return fromId;
-	}
-
-	public void setFromId(String fromId) {
-		this.fromId = fromId;
 	}
 
 	public String getToId() {

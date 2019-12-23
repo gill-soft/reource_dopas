@@ -4,22 +4,19 @@ import com.gillsoft.model.AbstractJsonModel;
 
 public class PointIdModel extends AbstractJsonModel {
 	
-	private static final long serialVersionUID = 584282348358969654L;
+	private static final long serialVersionUID = 1903408619589522994L;
 
 	private String id;
 	
 	private String ip;
 	
-	private String fromId;
-	
 	public PointIdModel() {
 		
 	}
 
-	public PointIdModel(String id, String ip, String fromId) {
+	public PointIdModel(String id, String ip) {
 		this.id = id;
 		this.ip = ip;
-		this.fromId = fromId;
 	}
 
 	public String getId() {
@@ -36,14 +33,6 @@ public class PointIdModel extends AbstractJsonModel {
 
 	public void setIp(String ip) {
 		this.ip = ip;
-	}
-
-	public String getFromId() {
-		return fromId;
-	}
-
-	public void setFromId(String fromId) {
-		this.fromId = fromId;
 	}
 	
 	@Override
